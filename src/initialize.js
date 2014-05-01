@@ -20,6 +20,7 @@ var VELOCITY = 2.0;
 var R_VELOCITY = 5.0;
 
 function initialize(initial_state) {
+	var count = 0;
 	for (var i = 0; i < NUM_PARTICLES; i++) {
 		var unit = Math.floor((i % 64) / 16);
 		if (unit === 0) {
@@ -36,6 +37,12 @@ function initialize(initial_state) {
 		} else if (unit === 2) {
 			// Particle must be emitted
 			initial_state[i * 8 + 3] = -2.0;
+		} else if (unit === 3) {
+			initial_state[i * 8 + 0] = Math.floor(count / 64) - 8;
+			initial_state[i * 8 + 1] = Math.floor((count % 64) / 8) - 4;
+			initial_state[i * 8 + 2] = (count % 64) % 8 - 32;
+			count++;
 		}
 	}
+	console.log(count);
 }

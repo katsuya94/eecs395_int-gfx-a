@@ -8202,10 +8202,14 @@ function main() {
 	var panel = {
 		ToggleSolver: function() {
 			RUNGE_KUTTA = !RUNGE_KUTTA;
-		}
+		},
+		fire_x: 5.0,
+		fire_y: 5.0
 	};
 	var gui = new dat.GUI();
 	gui.add(panel, 'ToggleSolver');
+	gui.add(panel, 'fire_x').min(-10.0).max(10.0);
+	gui.add(panel, 'fire_y').min(-10.0).max(10.0);
 
 	// Shader Programs
 	var program_phys = createProgram(
@@ -8283,6 +8287,7 @@ function main() {
 		gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
 		gl.vertexAttribPointer(program_calc.a_rectangle, 2, gl.FLOAT, false, 0, 0);
 
+		gl.uniform2f(program_calc.u_fire, panel.fire_x, panel.fire_y);
 		gl.uniform1f(program_calc.u_dt, dt);
 
 		gl.bindFramebuffer(gl.FRAMEBUFFER, system.fb_state);
@@ -8363,6 +8368,8 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 
 	program_draw.u_vp		= gl.getUniformLocation(program_draw, 'u_vp');
 	program_stat.u_vp		= gl.getUniformLocation(program_stat, 'u_vp');
+
+	program_calc.u_fire		= gl.getUniformLocation(program_calc, 'u_fire');
 
 	gl.useProgram(program_phys);
 	gl.uniform2f(program_phys.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);

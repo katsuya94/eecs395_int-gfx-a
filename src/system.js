@@ -26,6 +26,8 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 	program_draw.u_vp		= gl.getUniformLocation(program_draw, 'u_vp');
 	program_stat.u_vp		= gl.getUniformLocation(program_stat, 'u_vp');
 
+	program_calc.u_fire		= gl.getUniformLocation(program_calc, 'u_fire');
+
 	gl.useProgram(program_phys);
 	gl.uniform2f(program_phys.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
 	gl.useProgram(program_calc);

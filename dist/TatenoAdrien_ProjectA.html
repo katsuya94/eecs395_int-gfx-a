@@ -32,23 +32,56 @@ vec4 rel_texel(vec2 offset) {
 }
 
 void main() {
-	int unit = int(gl_FragCoord.x) / 16;
+	int unit = int(gl_FragCoord.x) / 32;
 	int slot = int(mod(gl_FragCoord.x, 2.0));
 
 	int x = int(gl_FragCoord.x);
 	int y = int(gl_FragCoord.y);
 	
 	if (slot == 0) {
-		gl_FragColor = vec4(rel_texel(vec2(1.0, 0.0)).xyz, 0.0);
+		if (unit == 2) {
+			gl_FragColor = vec4(rel_texel(vec2(1.0, 0.0)).xyz, -0.5);
+		} else {
+			gl_FragColor = vec4(rel_texel(vec2(1.0, 0.0)).xyz, 0.0);
+		}
 	} else {
+		vec3 position = rel_texel(vec2(-1.0, 0.0)).xyz;
 		if (unit == 0) {
-			vec4 position = rel_texel(vec2(-1.0, 0.0));
 			float horiz = length(position.xy);
 			float dist = length(vec3(position.xy, position.z + 1.0));
 			dist = dist * dist;
 			gl_FragColor = vec4(vec3(-position.y, position.x, 0.0) / horiz +
 				vec3(-position.x, -position.y, 0.0) / dist * 200.0 +
 				vec3(0.0, 0.0, 0.1) / horiz, 0.0);
+		} else if (unit == 1) {
+			vec3 velocity = rel_texel(vec2(0.0, 0.0)).xyz;
+			int num = 0;
+			vec3 average = vec3(0.0, 0.0, 0.0);
+			vec3 averagev = vec3(0.0, 0.0, 0.0);
+			vec3 force = vec3(0.0, 0.0, 0.0);
+			for (int i = 16; i < 32; i++) {
+				for (int j = 0; j < 64; j++) {
+					float x = float(i * 2);
+					float y = float(j);
+					vec3 f_position = abs_texel(vec2(x, y)).xyz;
+					vec3 f_velocity = abs_texel(vec2(x + 1.0, y)).xyz;
+					vec3 displacement = position - f_position;
+					float l = length(displacement);
+					if (l < 1.0 && l > 0.01) {
+						num++;
+						average += displacement;
+						averagev += f_velocity;
+						force += normalize(displacement) * 0.05;
+					}
+				}
+			}
+			if (num > 0) {
+				force -= average / float(num) * 2.0;
+				force += ((averagev / float(num)) - velocity) * 0.1;
+			}
+			gl_FragColor = vec4(force, 1.0);
+		} else if (unit == 2) {
+			gl_FragColor = vec4(0.0, 0.0, 1.0, 0.0);
 		}
 	}
 }
@@ -76,6 +109,10 @@ uniform vec2 u_viewport;
 
 uniform float u_dt;
 
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
 vec4 texel(vec2 offset) {
 	return texture2D(u_state, (gl_FragCoord.xy + offset) / u_viewport);
 }
@@ -85,7 +122,7 @@ void main() {
 	#define LOW 0.0
 	#define HI 20.0
 
-	int unit = int(gl_FragCoord.x) / 16;
+	int unit = int(gl_FragCoord.x) / 32;
 	int slot = int(mod(gl_FragCoord.x, 2.0));
 
 	vec2 texcoord = gl_FragCoord.xy / u_viewport;
@@ -96,24 +133,39 @@ void main() {
 	// Correction
 	if (slot == 0) {
 		if (unit == 0) {
+			// Place upper bound at origin
 			if (frag.z > HI)
 				frag.xyz /= vec3(10.0, 10.0, 40.0);
+		} if (unit == 2) {
+			if (frag.w < 0.01) {
+				if (frag.w > -1.0)
+					frag = vec4(5.0, 5.0, 5.0, -2.0);
+				else if (texel(vec2(1.0, 0.0)).w < -3.0)
+					frag.w = 1.0 + rand(texcoord);
+			}
 		}
 	} else {
-		vec3 position = texel(vec2(-1.0, 0.0)).xyz;
-		if (position.x > BOUND && frag.x > 0.0)
-			frag.x = -frag.x;
-		else if (position.x < -BOUND && frag.x < 0.0)
-			frag.x = -frag.x;
-		else if (position.y > BOUND && frag.y > 0.0)
-			frag.y = -frag.y;
-		else if (position.y < -BOUND && frag.y < 0.0)
-			frag.y = -frag.y;
-		else if (position.z < LOW && frag.z < 0.0)
-			frag.z = -frag.z;
-		if (unit == 1) {
-			if (position.z > HI && frag.z > 0.0)
+		if (unit == 2) {
+			float phase = texel(vec2(-1.0, 0.0)).w;
+			if (phase < -1.0) {
+				frag = vec4(1.0 * rand(frag.xy) - 0.5, 1.0 * rand(frag.yz) - 0.5, 1.0 * rand(frag.zx) - 0.5, -4.0);
+			}
+		} else {
+			vec3 position = texel(vec2(-1.0, 0.0)).xyz;
+			if (position.x > BOUND && frag.x > 0.0)
+				frag.x = -frag.x;
+			else if (position.x < -BOUND && frag.x < 0.0)
+				frag.x = -frag.x;
+			else if (position.y > BOUND && frag.y > 0.0)
+				frag.y = -frag.y;
+			else if (position.y < -BOUND && frag.y < 0.0)
+				frag.y = -frag.y;
+			else if (position.z < LOW && frag.z < 0.0)
 				frag.z = -frag.z;
+			if (unit > 0 ) {
+				if (position.z > HI && frag.z > 0.0)
+					frag.z = -frag.z;
+			}
 		}
 	}
 
@@ -162,20 +214,29 @@ void main() {
 attribute vec2 a_reference;
 
 uniform sampler2D u_state;
+uniform vec2 u_viewport;
 
 uniform mat4 u_vp;
 
+varying vec4 v_color;
+
 void main() {
-	vec4 position = vec4(texture2D(u_state, a_reference).xyz, 1.0);
-	gl_Position = u_vp * position;
+	int unit = int(a_reference.x * u_viewport.x) / 32;
+	vec4 position = texture2D(u_state, a_reference);
+	v_color = vec4((unit == 0 ? 1.0 : 0.0) + sqrt(position.w / 2.0), unit == 1 ? 1.0 : 0.0, unit == 2 ? 1.0 : 0.0, 1.0);
+	gl_Position = u_vp * vec4(position.xyz, 1.0);
 	gl_PointSize = 2.0;
 }
 
 	</script>
 	<script id="draw-fs" type="x-shader/x-vertex">
 
+precision mediump float;
+
+varying vec4 v_color;
+
 void main() {
-	gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);	
+	gl_FragColor = v_color;
 }
 
 	</script>

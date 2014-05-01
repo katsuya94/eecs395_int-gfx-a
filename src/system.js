@@ -11,6 +11,7 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 	program_phys.u_viewport	= gl.getUniformLocation(program_phys, 'u_viewport');
 	program_calc.u_viewport	= gl.getUniformLocation(program_calc, 'u_viewport');
 	program_slvr.u_viewport	= gl.getUniformLocation(program_slvr, 'u_viewport');
+	program_draw.u_viewport	= gl.getUniformLocation(program_draw, 'u_viewport');
 
 	program_phys.u_state	= gl.getUniformLocation(program_phys, 'u_state');
 	program_calc.u_state	= gl.getUniformLocation(program_calc, 'u_state');
@@ -31,6 +32,8 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 	gl.uniform2f(program_calc.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
 	gl.useProgram(program_slvr);
 	gl.uniform2f(program_slvr.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
+	gl.useProgram(program_draw);
+	gl.uniform2f(program_draw.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
 
 	// Attributes
 	program_phys.a_rectangle = gl.getAttribLocation(program_phys, 'a_rectangle');

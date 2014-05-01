@@ -1,5 +1,5 @@
 /* jshint strict: false */
-/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE, resize */
+/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, RUNGE_KUTTA, resize */
 /* exported main */
 
 function main() {
@@ -21,6 +21,15 @@ function main() {
 	stats.domElement.style.left		= '20px';
 	stats.domElement.style.top		= '20px';
 	document.body.appendChild(stats.domElement);
+
+	// dat.GUI
+	var panel = {
+		ToggleSolver: function() {
+			RUNGE_KUTTA = !RUNGE_KUTTA;
+		}
+	};
+	var gui = new dat.GUI();
+	gui.add(panel, 'ToggleSolver');
 
 	// Shader Programs
 	var program_phys = createProgram(
@@ -74,7 +83,7 @@ function main() {
 		gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
 		gl.vertexAttribPointer(program_phys.a_rectangle, 2, gl.FLOAT, false, 0, 0);
 
-		if (MODE === 0) {
+		if (!RUNGE_KUTTA) {
 			//EULER
 			solve(1, system.fb_dot1, 0.0);
 		} else {

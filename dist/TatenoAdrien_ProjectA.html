@@ -123,6 +123,12 @@ void main() {
 	#define BOUND 10.0
 	#define LOW 0.0
 	#define HI 20.0
+	#define BOX_Z_HI 9.5
+	#define BOX_Z_LOW 5.5
+	#define BOX_Y_HI 3.0
+	#define BOX_Y_LOW 7.0
+	#define BOX_X_HI 3.0
+	#define BOX_X_LOW 7.0
 
 	int unit = int(gl_FragCoord.x) / 32;
 	int slot = int(mod(gl_FragCoord.x, 2.0));
@@ -141,19 +147,19 @@ void main() {
 		} if (unit == 2) {
 			if (frag.w < 0.01) {
 				if (frag.w > -1.0)
-					frag = vec4(u_fire, 5.0, -2.0);
+					frag = vec4(u_fire, 1.0, -2.0);
 				else if (texel(vec2(1.0, 0.0)).w < -3.0)
 					frag.w = 1.0 + rand(texcoord);
 			}
 		}
 	} else {
+		vec3 position = texel(vec2(-1.0, 0.0)).xyz;
 		if (unit == 2) {
 			float phase = texel(vec2(-1.0, 0.0)).w;
 			if (phase < -1.0) {
 				frag = vec4(1.0 * rand(frag.xy) - 0.5, 1.0 * rand(frag.yz) - 0.5, 1.0 * rand(frag.zx) - 0.5, -4.0);
 			}
 		} else {
-			vec3 position = texel(vec2(-1.0, 0.0)).xyz;
 			if (position.x > BOUND && frag.x > 0.0)
 				frag.x = -frag.x;
 			else if (position.x < -BOUND && frag.x < 0.0)
@@ -168,6 +174,32 @@ void main() {
 				if (position.z > HI && frag.z > 0.0)
 					frag.z = -frag.z;
 			}
+		}
+		if (position.x < BOX_X_HI &&
+			position.x > BOX_X_LOW &&
+			position.y < BOX_Y_HI &&
+			position.y > BOX_Y_LOW &&
+			position.z < BOX_Z_HI &&
+			position.z > BOX_Z_LOW) {
+			vec3 relative = position - vec3(5.0, 5.0, 7.5);
+			vec3 multiplier = vec3(
+				(relative.x > 1.75 && frag.x < 0.0) || (relative.x < -1.75 && frag.x > 0.0) ? -1.0 : 1.0,
+				(relative.y > 1.75 && frag.y < 0.0) || (relative.y < -1.75 && frag.y > 0.0) ? -1.0 : 1.0,
+				(relative.z > 1.75 && frag.z < 0.0) || (relative.z < -1.75 && frag.z > 0.0) ? -1.0 : 1.0);
+			frag.xyz = frag.xyz * multiplier;
+		}
+		if (position.x > -BOX_X_HI &&
+			position.x < -BOX_X_LOW &&
+			position.y > -BOX_Y_HI &&
+			position.y < -BOX_Y_LOW &&
+			position.z < BOX_Z_HI &&
+			position.z > BOX_Z_LOW) {
+			vec3 relative = position - vec3(-5.0, -5.0, 7.5);
+			vec3 multiplier = vec3(
+				(relative.x > 1.75 && frag.x < 0.0) || (relative.x < -1.75 && frag.x > 0.0) ? -1.0 : 1.0,
+				(relative.y > 1.75 && frag.y < 0.0) || (relative.y < -1.75 && frag.y > 0.0) ? -1.0 : 1.0,
+				(relative.z > 1.75 && frag.z < 0.0) || (relative.z < -1.75 && frag.z > 0.0) ? -1.0 : 1.0);
+			frag.xyz = frag.xyz * multiplier;
 		}
 	}
 

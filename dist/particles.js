@@ -8035,7 +8035,56 @@ if(typeof(exports) !== 'undefined') {
 
 	}
 
-};;function init_camera() {
+};;/* exported box */
+
+function box(x, y, z) {
+	var array = [
+		x - 2.0, y - 2.0, z - 2.0, 1.0, 1.0, 0.0,
+		x - 2.0, y + 2.0, z - 2.0, 1.0, 1.0, 0.0,
+		x - 2.0, y - 2.0, z + 2.0, 1.0, 1.0, 0.0,
+		x - 2.0, y + 2.0, z - 2.0, 1.0, 1.0, 0.0,
+		x - 2.0, y - 2.0, z + 2.0, 1.0, 1.0, 0.0,
+		x - 2.0, y + 2.0, z + 2.0, 1.0, 1.0, 0.0,
+
+		x + 2.0, y - 2.0, z - 2.0, 1.0, 1.0, 0.0,
+		x + 2.0, y + 2.0, z - 2.0, 1.0, 1.0, 0.0,
+		x + 2.0, y - 2.0, z + 2.0, 1.0, 1.0, 0.0,
+		x + 2.0, y + 2.0, z - 2.0, 1.0, 1.0, 0.0,
+		x + 2.0, y - 2.0, z + 2.0, 1.0, 1.0, 0.0,
+		x + 2.0, y + 2.0, z + 2.0, 1.0, 1.0, 0.0,
+
+		x - 2.0, y + 2.0, z - 2.0, 1.0, 0.0, 1.0,
+		x + 2.0, y + 2.0, z - 2.0, 1.0, 0.0, 1.0,
+		x - 2.0, y + 2.0, z + 2.0, 1.0, 0.0, 1.0,
+		x + 2.0, y + 2.0, z - 2.0, 1.0, 0.0, 1.0,
+		x - 2.0, y + 2.0, z + 2.0, 1.0, 0.0, 1.0,
+		x + 2.0, y + 2.0, z + 2.0, 1.0, 0.0, 1.0,
+
+		x - 2.0, y - 2.0, z - 2.0, 1.0, 0.0, 1.0,
+		x + 2.0, y - 2.0, z - 2.0, 1.0, 0.0, 1.0,
+		x - 2.0, y - 2.0, z + 2.0, 1.0, 0.0, 1.0,
+		x + 2.0, y - 2.0, z - 2.0, 1.0, 0.0, 1.0,
+		x - 2.0, y - 2.0, z + 2.0, 1.0, 0.0, 1.0,
+		x + 2.0, y - 2.0, z + 2.0, 1.0, 0.0, 1.0,
+
+		x - 2.0, y - 2.0, z - 2.0, 0.0, 1.0, 1.0,
+		x + 2.0, y - 2.0, z - 2.0, 0.0, 1.0, 1.0,
+		x - 2.0, y + 2.0, z - 2.0, 0.0, 1.0, 1.0,
+		x + 2.0, y - 2.0, z - 2.0, 0.0, 1.0, 1.0,
+		x - 2.0, y + 2.0, z - 2.0, 0.0, 1.0, 1.0,
+		x + 2.0, y + 2.0, z - 2.0, 0.0, 1.0, 1.0,
+
+		x - 2.0, y - 2.0, z + 2.0, 0.0, 1.0, 1.0,
+		x + 2.0, y - 2.0, z + 2.0, 0.0, 1.0, 1.0,
+		x - 2.0, y + 2.0, z + 2.0, 0.0, 1.0, 1.0,
+		x + 2.0, y - 2.0, z + 2.0, 0.0, 1.0, 1.0,
+		x - 2.0, y + 2.0, z + 2.0, 0.0, 1.0, 1.0,
+		x + 2.0, y + 2.0, z + 2.0, 0.0, 1.0, 1.0,
+	];
+	window.alert(array.length / 6);
+
+	return array;
+};function init_camera() {
 	var camera = {};
 	camera.view = mat4.create();
 
@@ -8203,13 +8252,13 @@ function main() {
 		ToggleSolver: function() {
 			RUNGE_KUTTA = !RUNGE_KUTTA;
 		},
-		fire_x: 5.0,
-		fire_y: 5.0
+		fire_x: -5.0,
+		fire_y: -5.0
 	};
 	var gui = new dat.GUI();
 	gui.add(panel, 'ToggleSolver');
-	gui.add(panel, 'fire_x').min(-10.0).max(10.0);
-	gui.add(panel, 'fire_y').min(-10.0).max(10.0);
+	gui.add(panel, 'fire_x').min(-10).max(10).step(0.05);
+	gui.add(panel, 'fire_y').min(-10).max(10).step(0.05);
 
 	// Shader Programs
 	var program_phys = createProgram(
@@ -8333,7 +8382,8 @@ function main() {
 
 		gl.uniformMatrix4fv(program_stat.u_vp, false, camera.vp);
 
-		gl.drawArrays(gl.LINES, 0, system.static_size);
+		gl.drawArrays(gl.LINES, 0, system.static_size - 72);
+		gl.drawArrays(gl.TRIANGLES, system.static_size - 72, 72);
 
 		stats.end();
 		window.requestAnimationFrame(frame);
@@ -8342,7 +8392,7 @@ function main() {
 	resize();
 
 	window.requestAnimationFrame(frame);
-};/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, FSIZE, grid, initialize */
+};/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, FSIZE, grid, box, initialize */
 /* exported init_system */
 
 function init_system(program_phys, program_calc, program_slvr, program_draw, program_stat) {
@@ -8397,8 +8447,8 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 		0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
 		0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
-	].concat(grid()));
-	system.static_size = values.length / 6;
+	].concat(grid()).concat(box(-5.0, -5.0, 7.5)).concat(box(5.0, 5.0, 7.5)));
+	system.static_size = Math.round(values.length / 6);
 	system.buffer_static = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_static);
 	gl.bufferData(gl.ARRAY_BUFFER, values, gl.STATIC_DRAW);

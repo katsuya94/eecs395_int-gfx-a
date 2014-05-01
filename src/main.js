@@ -27,13 +27,13 @@ function main() {
 		ToggleSolver: function() {
 			RUNGE_KUTTA = !RUNGE_KUTTA;
 		},
-		fire_x: 5.0,
-		fire_y: 5.0
+		fire_x: -5.0,
+		fire_y: -5.0
 	};
 	var gui = new dat.GUI();
 	gui.add(panel, 'ToggleSolver');
-	gui.add(panel, 'fire_x').min(-10.0).max(10.0);
-	gui.add(panel, 'fire_y').min(-10.0).max(10.0);
+	gui.add(panel, 'fire_x').min(-10).max(10).step(0.05);
+	gui.add(panel, 'fire_y').min(-10).max(10).step(0.05);
 
 	// Shader Programs
 	var program_phys = createProgram(
@@ -157,7 +157,8 @@ function main() {
 
 		gl.uniformMatrix4fv(program_stat.u_vp, false, camera.vp);
 
-		gl.drawArrays(gl.LINES, 0, system.static_size);
+		gl.drawArrays(gl.LINES, 0, system.static_size - 72);
+		gl.drawArrays(gl.TRIANGLES, system.static_size - 72, 72);
 
 		stats.end();
 		window.requestAnimationFrame(frame);

@@ -1,5 +1,5 @@
 /* jshint strict: false */
-/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, FSIZE, grid, initialize */
+/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, FSIZE, grid, box, initialize */
 /* exported init_system */
 
 function init_system(program_phys, program_calc, program_slvr, program_draw, program_stat) {
@@ -54,8 +54,8 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 		0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
 		0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
-	].concat(grid()));
-	system.static_size = values.length / 6;
+	].concat(grid()).concat(box(-5.0, -5.0, 7.5)).concat(box(5.0, 5.0, 7.5)));
+	system.static_size = Math.round(values.length / 6);
 	system.buffer_static = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_static);
 	gl.bufferData(gl.ARRAY_BUFFER, values, gl.STATIC_DRAW);

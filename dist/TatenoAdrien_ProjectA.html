@@ -100,17 +100,19 @@ void main() {
 				frag.xyz /= vec3(10.0, 10.0, 40.0);
 		}
 	} else {
-		if (unit == 0) {
-			vec3 position = texel(vec2(-1.0, 0.0)).xyz;
-			if (position.x > BOUND && frag.x > 0.0)
-				frag.x = -frag.x;
-			else if (position.x < -BOUND && frag.x < 0.0)
-				frag.x = -frag.x;
-			else if (position.y > BOUND && frag.y > 0.0)
-				frag.y = -frag.y;
-			else if (position.y < -BOUND && frag.y < 0.0)
-				frag.y = -frag.y;
-			else if (position.z < LOW && frag.z < 0.0)
+		vec3 position = texel(vec2(-1.0, 0.0)).xyz;
+		if (position.x > BOUND && frag.x > 0.0)
+			frag.x = -frag.x;
+		else if (position.x < -BOUND && frag.x < 0.0)
+			frag.x = -frag.x;
+		else if (position.y > BOUND && frag.y > 0.0)
+			frag.y = -frag.y;
+		else if (position.y < -BOUND && frag.y < 0.0)
+			frag.y = -frag.y;
+		else if (position.z < LOW && frag.z < 0.0)
+			frag.z = -frag.z;
+		if (unit == 1) {
+			if (position.z > HI && frag.z > 0.0)
 				frag.z = -frag.z;
 		}
 	}

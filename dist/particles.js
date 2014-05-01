@@ -102,7 +102,7 @@ a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};
 	}
 
 	return camera;
-};/* exported X_LOW, X_HI, Y_LOW, Y_HI, Z_LOW, Z_HI, VELOCITY, NUM_PARTICLES, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, GRID_NUM, GRID_INT, FSIZE */
+};/* exported X_LOW, X_HI, Y_LOW, Y_HI, Z_LOW, Z_HI, VELOCITY, NUM_PARTICLES, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, GRID_NUM, GRID_INT, FSIZE, MODE */
 
 var NUM_PARTICLES			= Math.pow(64, 2);
 var NUM_SLOTS				= 2;
@@ -110,18 +110,12 @@ var PARTICLES_PER_ROW		= Math.sqrt(NUM_PARTICLES);
 var STATE_TEXTURE_WIDTH		= PARTICLES_PER_ROW * NUM_SLOTS;
 var STATE_TEXTURE_HEIGHT	= PARTICLES_PER_ROW;
 
-var X_HI		= 0.1;
-var X_LOW		= -0.1;
-var Y_HI		= 0.1;
-var Y_LOW		= -0.1;
-var Z_HI		= 20.0;
-var Z_LOW		= 0.0;
-var VELOCITY	= 0.0;
-
 var GRID_NUM	= 10;
 var GRID_INT	= 1.0;
 
-var FSIZE		= new Float32Array([]).BYTES_PER_ELEMENT;/* global GRID_NUM, GRID_INT */
+var FSIZE		= new Float32Array([]).BYTES_PER_ELEMENT
+
+var MODE = 0;;/* global GRID_NUM, GRID_INT */
 /* exported grid */
 
 function grid() {
@@ -133,13 +127,31 @@ function grid() {
 		array = array.concat([GRID_INT * i, -GRID_INT * GRID_NUM, 0.0, 1.0, 1.0, 1.0]);
 	}
 	return array;
-};/* global X_LOW, X_HI, Y_LOW, Y_HI, Z_LOW, Z_HI, VELOCITY, NUM_PARTICLES */
+};/* global NUM_PARTICLES */
 /* exported initialize */
+
+var X_HI		= 10.0;
+var X_LOW		= -10.0;
+var Y_HI		= 10.0;
+var Y_LOW		= -10.0;
+var Z_HI		= 20.0;
+var Z_LOW		= 0.0;
+
+var TORNADO_COLUMN = 1.0 / 16.0;
+
+var VELOCITY	= 0.0;
 
 function initialize(initial_state) {
 	for (var i = 0; i < NUM_PARTICLES; i++) {
 		var unit = Math.floor((i % 64) / 16);
 		if (unit === 0) {
+			initial_state[i * 8 + 0] = -TORNADO_COLUMN + Math.random() * TORNADO_COLUMN * 2.0;
+			initial_state[i * 8 + 1] = -TORNADO_COLUMN + Math.random() * TORNADO_COLUMN * 2.0;
+			initial_state[i * 8 + 2] = -TORNADO_COLUMN + Math.random() * TORNADO_COLUMN * 2.0;
+			initial_state[i * 8 + 4] = (Math.random() - 0.5) * 2.0 * VELOCITY;
+			initial_state[i * 8 + 5] = (Math.random() - 0.5) * 2.0 * VELOCITY;
+			initial_state[i * 8 + 6] = (Math.random() - 0.5) * 2.0 * VELOCITY;
+		} else if (unit === 1) {
 			initial_state[i * 8 + 0] = X_LOW + Math.random() * (X_HI - X_LOW);
 			initial_state[i * 8 + 1] = Y_LOW + Math.random() * (Y_HI - Y_LOW);
 			initial_state[i * 8 + 2] = Z_LOW + Math.random() * (Z_HI - Z_LOW);
@@ -148,7 +160,7 @@ function initialize(initial_state) {
 			initial_state[i * 8 + 6] = (Math.random() - 0.5) * 2.0 * VELOCITY;
 		}
 	}
-};/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, resize */
+};/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE, resize */
 /* exported main */
 
 function main() {
@@ -203,7 +215,6 @@ function main() {
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 	};
 
-	var mode = 0;
 	var last = Date.now();
 
 	gl.useProgram(program_draw);
@@ -224,7 +235,7 @@ function main() {
 		gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
 		gl.vertexAttribPointer(program_phys.a_rectangle, 2, gl.FLOAT, false, 0, 0);
 
-		if (mode === 0) {
+		if (MODE === 0) {
 			//EULER
 			solve(1, system.fb_dot1, 0.0);
 		} else {

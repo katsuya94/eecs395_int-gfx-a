@@ -1,5 +1,5 @@
 /* jshint strict: false */
-/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, resize */
+/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE, resize */
 /* exported main */
 
 function main() {
@@ -54,7 +54,6 @@ function main() {
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 	};
 
-	var mode = 0;
 	var last = Date.now();
 
 	gl.useProgram(program_draw);
@@ -75,7 +74,7 @@ function main() {
 		gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
 		gl.vertexAttribPointer(program_phys.a_rectangle, 2, gl.FLOAT, false, 0, 0);
 
-		if (mode === 0) {
+		if (MODE === 0) {
 			//EULER
 			solve(1, system.fb_dot1, 0.0);
 		} else {

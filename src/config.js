@@ -13,3 +13,4 @@ var GRID_INT	= 1.0;
 var FSIZE	= new Float32Array([]).BYTES_PER_ELEMENT;
 
 var RUNGE_KUTTA = false;
+var PAUSED = true;

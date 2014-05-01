@@ -125,10 +125,10 @@ void main() {
 	#define HI 20.0
 	#define BOX_Z_HI 9.5
 	#define BOX_Z_LOW 5.5
-	#define BOX_Y_HI 3.0
-	#define BOX_Y_LOW 7.0
-	#define BOX_X_HI 3.0
-	#define BOX_X_LOW 7.0
+	#define BOX_Y_HI 7.0
+	#define BOX_Y_LOW 3.0
+	#define BOX_X_HI 7.0
+	#define BOX_X_LOW 3.0
 
 	int unit = int(gl_FragCoord.x) / 32;
 	int slot = int(mod(gl_FragCoord.x, 2.0));
@@ -257,7 +257,7 @@ varying vec4 v_color;
 void main() {
 	int unit = int(a_reference.x * u_viewport.x) / 32;
 	vec4 position = texture2D(u_state, a_reference);
-	v_color = vec4((unit == 0 ? 1.0 : 0.0) + sqrt(position.w / 2.0), unit == 1 ? 1.0 : 0.0, unit == 2 ? 1.0 : 0.0, 1.0);
+	v_color = vec4((unit == 0 ? 1.0 : 0.0) + sqrt(position.w / 2.0), unit == 1 || unit == 3 ? 1.0 : 0.0, unit == 2 || unit == 3 ? 1.0 : 0.0, 1.0);
 	gl_Position = u_vp * vec4(position.xyz, 1.0);
 	gl_PointSize = 4.0 - gl_Position.z * 0.1;
 }

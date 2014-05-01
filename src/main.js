@@ -27,11 +27,15 @@ function main() {
 		ToggleSolver: function() {
 			RUNGE_KUTTA = !RUNGE_KUTTA;
 		},
+		PausePlay: function() {
+			PAUSED = !PAUSED;
+		},
 		fire_x: -5.0,
 		fire_y: -5.0
 	};
 	var gui = new dat.GUI();
 	gui.add(panel, 'ToggleSolver');
+	gui.add(panel, 'PausePlay');
 	gui.add(panel, 'fire_x').min(-10).max(10).step(0.05);
 	gui.add(panel, 'fire_y').min(-10).max(10).step(0.05);
 
@@ -79,43 +83,45 @@ function main() {
 
 		stats.begin();
 
-		gl.viewport(0, 0, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
+		if (!PAUSED) {
+			gl.viewport(0, 0, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
 
-		gl.useProgram(program_phys);
+			gl.useProgram(program_phys);
 
-		// PHYSICS
-		gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
-		gl.vertexAttribPointer(program_phys.a_rectangle, 2, gl.FLOAT, false, 0, 0);
-
-		if (!RUNGE_KUTTA) {
-			//EULER
-			solve(1, system.fb_dot1, 0.0);
-		} else {
-			//RUNGE KUTTA
-			solve(0, system.fb_dot1, 0.0);
-			solve(1, system.fb_dot2, dt / 2.0);
-			solve(2, system.fb_dot3, dt / 2.0);
-			solve(3, system.fb_dot4, dt);
-
-			gl.useProgram(program_slvr);
-
+			// PHYSICS
 			gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
-			gl.vertexAttribPointer(program_slvr.a_rectangle, 2, gl.FLOAT, false, 0, 0);
+			gl.vertexAttribPointer(program_phys.a_rectangle, 2, gl.FLOAT, false, 0, 0);
 
-			gl.bindFramebuffer(gl.FRAMEBUFFER, system.fb_dot1);
+			if (!RUNGE_KUTTA) {
+				//EULER
+				solve(1, system.fb_dot1, 0.0);
+			} else {
+				//RUNGE KUTTA
+				solve(0, system.fb_dot1, 0.0);
+				solve(1, system.fb_dot2, dt / 2.0);
+				solve(2, system.fb_dot3, dt / 2.0);
+				solve(3, system.fb_dot4, dt);
+
+				gl.useProgram(program_slvr);
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
+				gl.vertexAttribPointer(program_slvr.a_rectangle, 2, gl.FLOAT, false, 0, 0);
+
+				gl.bindFramebuffer(gl.FRAMEBUFFER, system.fb_dot1);
+				gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+			}
+
+			// CALCULATION
+			gl.useProgram(program_calc);
+			gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
+			gl.vertexAttribPointer(program_calc.a_rectangle, 2, gl.FLOAT, false, 0, 0);
+
+			gl.uniform2f(program_calc.u_fire, panel.fire_x, panel.fire_y);
+			gl.uniform1f(program_calc.u_dt, dt);
+
+			gl.bindFramebuffer(gl.FRAMEBUFFER, system.fb_state);
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 		}
-
-		// CALCULATION
-		gl.useProgram(program_calc);
-		gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
-		gl.vertexAttribPointer(program_calc.a_rectangle, 2, gl.FLOAT, false, 0, 0);
-
-		gl.uniform2f(program_calc.u_fire, panel.fire_x, panel.fire_y);
-		gl.uniform1f(program_calc.u_dt, dt);
-
-		gl.bindFramebuffer(gl.FRAMEBUFFER, system.fb_state);
-		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
 		// DRAWING
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);

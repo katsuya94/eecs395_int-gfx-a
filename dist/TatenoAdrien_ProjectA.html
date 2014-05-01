@@ -225,7 +225,7 @@ void main() {
 	vec4 position = texture2D(u_state, a_reference);
 	v_color = vec4((unit == 0 ? 1.0 : 0.0) + sqrt(position.w / 2.0), unit == 1 ? 1.0 : 0.0, unit == 2 ? 1.0 : 0.0, 1.0);
 	gl_Position = u_vp * vec4(position.xyz, 1.0);
-	gl_PointSize = 2.0;
+	gl_PointSize = 4.0 - gl_Position.z * 0.1;
 }
 
 	</script>

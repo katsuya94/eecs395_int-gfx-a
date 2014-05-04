@@ -2,6 +2,8 @@
 /* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat */
 /* exported main */
 
+var projection;
+
 function main() {
 
 	canvas = document.getElementById('webgl');
@@ -138,23 +140,22 @@ function main() {
 		gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 		gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
-		mat4.rotateZ(camera.rotate, camera.rotate, dt * ((camera.dirpad[0] ? -1 : 0) + (camera.dirpad[2] ? 1 : 0)));
-		mat4.rotateX(camera.altitude, camera.altitude, dt * ((camera.dirpad[1] ? -1 : 0) + (camera.dirpad[3] ? 1 : 0)));
-		mat4.multiply(camera.view, camera.altitude, camera.rotate);
-		mat4.adjoint(camera.correction, camera.view);
-		vec3.set(camera.front, 0.0, 0.0, 1.0);
-		vec3.transformMat4(camera.front, camera.front, camera.correction);
-		vec3.normalize(camera.front, camera.front);
-		vec3.copy(camera.right, camera.front);
-		vec3.scale(camera.front, camera.front, dt * ((camera.wasd[1] ? 1 : 0) + (camera.wasd[3] ? -1 : 0)) * 10.0);
-		vec3.add(camera.position, camera.position, camera.front);
-		vec3.cross(camera.right, camera.right, camera.upward);
-		vec3.scale(camera.right, camera.right, dt * ((camera.wasd[0] ? -1 : 0) + (camera.wasd[2] ? 1 : 0)) * 10.0);
-		vec3.add(camera.position, camera.position, camera.right);
-		vec3.copy(camera.right, camera.upward);
-		vec3.scale(camera.right, camera.right, dt * ((camera.qe[0] ? 1 : 0) + (camera.qe[1] ? -1 : 0)) * 10.0);
-		vec3.add(camera.position, camera.position, camera.right);
-		mat4.translate(camera.view, camera.view, camera.position);
+		camera.altitude += dt * ((camera.dirpad[3] ? 1 : 0) + (camera.dirpad[1] ? -1 : 0));
+		camera.direction += dt * ((camera.dirpad[2] ? 1 : 0) + (camera.dirpad[0] ? -1 : 0));
+		mat4.identity(camera.rotate);
+		mat4.rotateX(camera.rotate, camera.rotate, camera.altitude);
+		mat4.rotateZ(camera.rotate, camera.rotate, camera.direction);
+		mat4.adjoint(camera.adjoint, camera.rotate);
+		vec3.transformMat4(camera.frontr, camera.front, camera.adjoint);
+		vec3.scale(camera.frontr, camera.frontr, dt * ((camera.wasd[1] ? 10 : 0) + (camera.wasd[3] ? -10 : 0)));
+		vec3.transformMat4(camera.upr, camera.up, camera.adjoint);
+		vec3.scale(camera.upr, camera.upr, dt * ((camera.qe[0] ? 10 : 0) + (camera.qe[1] ? -10 : 0)));
+		vec3.transformMat4(camera.rightr, camera.right, camera.adjoint);
+		vec3.scale(camera.rightr, camera.rightr, dt * ((camera.wasd[0] ? 10 : 0) + (camera.wasd[2] ? -10 : 0)));
+		vec3.add(camera.position, camera.position, camera.frontr);
+		vec3.add(camera.position, camera.position, camera.upr);
+		vec3.add(camera.position, camera.position, camera.rightr);
+		mat4.translate(camera.view, camera.rotate, camera.position);
 		mat4.multiply(camera.vp, camera.projection, camera.view);
 
 		gl.useProgram(program_draw);

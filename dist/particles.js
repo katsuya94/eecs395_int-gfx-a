@@ -8083,26 +8083,35 @@ function box(x, y, z) {
 	];
 
 	return array;
-};function init_camera() {
+};/* global projection: true, mat4, vec3 */
+/* exported init_camera */
+
+function init_camera() {
 	var camera = {};
+	cam = camera;
+
 	camera.view = mat4.create();
+	camera.altitude = -Math.PI / 4;
+	camera.direction = -3 * Math.PI / 4;
 
 	camera.projection = mat4.create();
-	projection = camera.projection; // GLOBAL
+	projection = camera.projection; // Global
+
+	camera.up = vec3.create();
+	camera.upr = vec3.create();
+	vec3.set(camera.up, 0.0, 1.0, 0.0);
+	camera.right = vec3.create();
+	camera.rightr = vec3.create();
+	vec3.set(camera.right, 1.0, 0.0, 0.0);
+	camera.front = vec3.create();
+	camera.frontr = vec3.create();
+	vec3.set(camera.front, 0.0, 0.0, 1.0);
 
 	camera.rotate = mat4.create();
-	camera.altitude = mat4.create();
-	camera.direction = mat4.create();
-	mat4.rotateX(camera.altitude, camera.altitude, Math.PI);
-
-	camera.correction = mat4.create();
-	camera.upward = vec3.create();
-	vec3.set(camera.upward, 0.0, 0.0, 1.0);
-	camera.front = vec3.create();
-	camera.right = vec3.create();
+	camera.adjoint = mat4.create();
 
 	camera.position = vec3.create();
-	vec3.set(camera.position, 2.0, 2.0, 2.0);
+	vec3.set(camera.position, -10.0, -10.0, -20.0);
 
 	camera.vp = mat4.create();
 
@@ -8112,51 +8121,75 @@ function box(x, y, z) {
 
 	window.onkeydown = function(e) {
 		var key = e.keyCode ? e.keyCode : e.which;
-		if (key === 37)
+		switch (key) {
+		case 37:
 			camera.dirpad[0] = true;
-		if (key === 38)
+			break;
+		case 38:
 			camera.dirpad[1] = true;
-		if (key === 39)
+			break;
+		case 39:
 			camera.dirpad[2] = true;
-		if (key === 40)
+			break;
+		case 40:
 			camera.dirpad[3] = true;
-		if (key === 65)
+			break;
+		case 65:
 			camera.wasd[0] = true;
-		if (key === 87)
+			break;
+		case 87:
 			camera.wasd[1] = true;
-		if (key === 68)
+			break;
+		case 68:
 			camera.wasd[2] = true;
-		if (key === 83)
+			break;
+		case 83:
 			camera.wasd[3] = true;
-		if (key === 81)
+			break;
+		case 81:
 			camera.qe[0] = true;
-		if (key === 69)
+			break;
+		case 69:
 			camera.qe[1] = true;
-	}
+			break;
+		}
+	};
 
 	window.onkeyup = function(e) {
 		var key = e.keyCode ? e.keyCode : e.which;
-		if (key === 37)
+		switch(key) {
+		case 37:
 			camera.dirpad[0] = false;
-		if (key === 38)
+			break;
+		case 38:
 			camera.dirpad[1] = false;
-		if (key === 39)
+			break;
+		case 39:
 			camera.dirpad[2] = false;
-		if (key === 40)
+			break;
+		case 40:
 			camera.dirpad[3] = false;
-		if (key === 65)
+			break;
+		case 65:
 			camera.wasd[0] = false;
-		if (key === 87)
+			break;
+		case 87:
 			camera.wasd[1] = false;
-		if (key === 68)
+			break;
+		case 68:
 			camera.wasd[2] = false;
-		if (key === 83)
+			break;
+		case 83:
 			camera.wasd[3] = false;
-		if (key === 81)
+			break;
+		case 81:
 			camera.qe[0] = false;
-		if (key === 69)
+			break;
+		case 69:
 			camera.qe[1] = false;
-	}
+			break;
+		}
+	};
 
 	return camera;
 };/* exported X_LOW, X_HI, Y_LOW, Y_HI, Z_LOW, Z_HI, VELOCITY, NUM_PARTICLES, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, GRID_NUM, GRID_INT, FSIZE, MODE */
@@ -8269,6 +8302,8 @@ function adjacencies(adj) {
 	}
 };/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat */
 /* exported main */
+
+var projection;
 
 function main() {
 
@@ -8406,23 +8441,22 @@ function main() {
 		gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 		gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
-		mat4.rotateZ(camera.rotate, camera.rotate, dt * ((camera.dirpad[0] ? -1 : 0) + (camera.dirpad[2] ? 1 : 0)));
-		mat4.rotateX(camera.altitude, camera.altitude, dt * ((camera.dirpad[1] ? -1 : 0) + (camera.dirpad[3] ? 1 : 0)));
-		mat4.multiply(camera.view, camera.altitude, camera.rotate);
-		mat4.adjoint(camera.correction, camera.view);
-		vec3.set(camera.front, 0.0, 0.0, 1.0);
-		vec3.transformMat4(camera.front, camera.front, camera.correction);
-		vec3.normalize(camera.front, camera.front);
-		vec3.copy(camera.right, camera.front);
-		vec3.scale(camera.front, camera.front, dt * ((camera.wasd[1] ? 1 : 0) + (camera.wasd[3] ? -1 : 0)) * 10.0);
-		vec3.add(camera.position, camera.position, camera.front);
-		vec3.cross(camera.right, camera.right, camera.upward);
-		vec3.scale(camera.right, camera.right, dt * ((camera.wasd[0] ? -1 : 0) + (camera.wasd[2] ? 1 : 0)) * 10.0);
-		vec3.add(camera.position, camera.position, camera.right);
-		vec3.copy(camera.right, camera.upward);
-		vec3.scale(camera.right, camera.right, dt * ((camera.qe[0] ? 1 : 0) + (camera.qe[1] ? -1 : 0)) * 10.0);
-		vec3.add(camera.position, camera.position, camera.right);
-		mat4.translate(camera.view, camera.view, camera.position);
+		camera.altitude += dt * ((camera.dirpad[3] ? 1 : 0) + (camera.dirpad[1] ? -1 : 0));
+		camera.direction += dt * ((camera.dirpad[2] ? 1 : 0) + (camera.dirpad[0] ? -1 : 0));
+		mat4.identity(camera.rotate);
+		mat4.rotateX(camera.rotate, camera.rotate, camera.altitude);
+		mat4.rotateZ(camera.rotate, camera.rotate, camera.direction);
+		mat4.adjoint(camera.adjoint, camera.rotate);
+		vec3.transformMat4(camera.frontr, camera.front, camera.adjoint);
+		vec3.scale(camera.frontr, camera.frontr, dt * ((camera.wasd[1] ? 10 : 0) + (camera.wasd[3] ? -10 : 0)));
+		vec3.transformMat4(camera.upr, camera.up, camera.adjoint);
+		vec3.scale(camera.upr, camera.upr, dt * ((camera.qe[0] ? 10 : 0) + (camera.qe[1] ? -10 : 0)));
+		vec3.transformMat4(camera.rightr, camera.right, camera.adjoint);
+		vec3.scale(camera.rightr, camera.rightr, dt * ((camera.wasd[0] ? 10 : 0) + (camera.wasd[2] ? -10 : 0)));
+		vec3.add(camera.position, camera.position, camera.frontr);
+		vec3.add(camera.position, camera.position, camera.upr);
+		vec3.add(camera.position, camera.position, camera.rightr);
+		mat4.translate(camera.view, camera.rotate, camera.position);
 		mat4.multiply(camera.vp, camera.projection, camera.view);
 
 		gl.useProgram(program_draw);

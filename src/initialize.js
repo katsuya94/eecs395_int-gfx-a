@@ -18,9 +18,12 @@ function initialize(initial_state) {
 	for (var i = 0; i < NUM_PARTICLES; i++) {
 		var unit = Math.floor((i % 64) / 16);
 		if (unit === 0) {
-			initial_state[i * 8 + 0] = -TORNADO_COLUMN + Math.random() * TORNADO_COLUMN * 2.0;
-			initial_state[i * 8 + 1] = -TORNADO_COLUMN + Math.random() * TORNADO_COLUMN * 2.0;
-			initial_state[i * 8 + 2] = -TORNADO_COLUMN + Math.random() * TORNADO_COLUMN * 2.0;
+			initial_state[i * 8 + 0] = (Math.random() - 0.5) * 0.1;
+			initial_state[i * 8 + 1] = (Math.random() - 0.5) * 0.1;
+			initial_state[i * 8 + 2] = -Math.random() * 0.1;
+			initial_state[i * 8 + 3] = Math.random() - 0.5;
+			initial_state[i * 8 + 4] = Math.random() - 0.5;
+			initial_state[i * 8 + 5] = Math.random() * 0.5;
 		} else if (unit === 1) {
 			initial_state[i * 8 + 0] = X_LOW + Math.random() * (X_HI - X_LOW);
 			initial_state[i * 8 + 1] = Y_LOW + Math.random() * (Y_HI - Y_LOW);

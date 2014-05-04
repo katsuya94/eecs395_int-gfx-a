@@ -1,3 +1,6 @@
+/* Adrien Katsuya Tateno
+   EECS 395 Intermediate Graphics - Spring 2014*/
+
 /** @namespace */
 var dat = dat || {};
 
@@ -3656,7 +3659,11 @@ dat.dom.CenteredDiv = (function (dom, common) {
 })(dat.dom.dom,
 dat.utils.common),
 dat.dom.dom,
-dat.utils.common);;/* Copyright (c) 2013, Brandon Jones, Colin MacKenzie IV. All rights reserved.
+dat.utils.common);;
+
+// FILE SEPARATOR
+
+/* Copyright (c) 2013, Brandon Jones, Colin MacKenzie IV. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -7897,7 +7904,11 @@ if(typeof(exports) !== 'undefined') {
 
   })(shim.exports);
 })(this);
-;var Stats = function () {
+;
+
+// FILE SEPARATOR
+
+var Stats = function () {
 
 	var startTime = Date.now(), prevTime = startTime;
 	var ms = 0, msMin = Infinity, msMax = 0;
@@ -8035,7 +8046,11 @@ if(typeof(exports) !== 'undefined') {
 
 	}
 
-};;/* exported box */
+};;
+
+// FILE SEPARATOR
+
+/* exported box */
 
 function box(x, y, z) {
 	var array = [
@@ -8083,7 +8098,11 @@ function box(x, y, z) {
 	];
 
 	return array;
-};/* global projection: true, mat4, vec3 */
+};
+
+// FILE SEPARATOR
+
+/* global projection: true, mat4, vec3 */
 /* exported init_camera */
 
 function init_camera() {
@@ -8152,6 +8171,9 @@ function init_camera() {
 		case 69:
 			camera.qe[1] = true;
 			break;
+		case 112:
+			document.getElementById('help').style.display = 'block';
+			break;
 		}
 	};
 
@@ -8188,11 +8210,18 @@ function init_camera() {
 		case 69:
 			camera.qe[1] = false;
 			break;
+		case 112:
+			document.getElementById('help').style.display = 'none';
+			break;
 		}
 	};
 
 	return camera;
-};/* exported X_LOW, X_HI, Y_LOW, Y_HI, Z_LOW, Z_HI, VELOCITY, NUM_PARTICLES, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, GRID_NUM, GRID_INT, FSIZE, MODE */
+};
+
+// FILE SEPARATOR
+
+/* exported X_LOW, X_HI, Y_LOW, Y_HI, Z_LOW, Z_HI, VELOCITY, NUM_PARTICLES, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, GRID_NUM, GRID_INT, FSIZE, MODE */
 
 var NUM_PARTICLES			= Math.pow(64, 2);
 var NUM_SLOTS				= 2;
@@ -8201,25 +8230,33 @@ var PARTICLES_PER_ROW		= Math.sqrt(NUM_PARTICLES);
 var STATE_TEXTURE_WIDTH		= PARTICLES_PER_ROW * NUM_SLOTS;
 var STATE_TEXTURE_HEIGHT	= PARTICLES_PER_ROW;
 
-var GRID_NUM	= 10;
+var GRID_NUM	= 500;
 var GRID_INT	= 1.0;
 
 var FSIZE	= new Float32Array([]).BYTES_PER_ELEMENT;
 
 var MODE = 0;
-var PAUSED = true;;/* global GRID_NUM, GRID_INT */
+var PAUSED = true;;
+
+// FILE SEPARATOR
+
+/* global GRID_NUM, GRID_INT */
 /* exported grid */
 
 function grid() {
 	var array = [];
 	for(var i= -GRID_NUM; i <= GRID_NUM; i++) {
-		array = array.concat([GRID_INT * GRID_NUM, GRID_INT * i, 0.0, 1.0, 1.0, 1.0]);
-		array = array.concat([-GRID_INT * GRID_NUM, GRID_INT * i, 0.0, 1.0, 1.0, 1.0]);
-		array = array.concat([GRID_INT * i, GRID_INT * GRID_NUM, 0.0, 1.0, 1.0, 1.0]);
-		array = array.concat([GRID_INT * i, -GRID_INT * GRID_NUM, 0.0, 1.0, 1.0, 1.0]);
+		array = array.concat([GRID_INT * GRID_NUM, GRID_INT * i, 0.0, 0.5, 0.5, 0.5]);
+		array = array.concat([-GRID_INT * GRID_NUM, GRID_INT * i, 0.0, 0.5, 0.5, 0.5]);
+		array = array.concat([GRID_INT * i, GRID_INT * GRID_NUM, 0.0, 0.5, 0.5, 0.5]);
+		array = array.concat([GRID_INT * i, -GRID_INT * GRID_NUM, 0.0, 0.5, 0.5, 0.5]);
 	}
 	return array;
-};/* global NUM_PARTICLES */
+};
+
+// FILE SEPARATOR
+
+/* global NUM_PARTICLES */
 /* exported initialize, adjacencies */
 
 var X_HI	= 10.0;
@@ -8238,9 +8275,12 @@ function initialize(initial_state) {
 	for (var i = 0; i < NUM_PARTICLES; i++) {
 		var unit = Math.floor((i % 64) / 16);
 		if (unit === 0) {
-			initial_state[i * 8 + 0] = -TORNADO_COLUMN + Math.random() * TORNADO_COLUMN * 2.0;
-			initial_state[i * 8 + 1] = -TORNADO_COLUMN + Math.random() * TORNADO_COLUMN * 2.0;
-			initial_state[i * 8 + 2] = -TORNADO_COLUMN + Math.random() * TORNADO_COLUMN * 2.0;
+			initial_state[i * 8 + 0] = (Math.random() - 0.5) * 0.1;
+			initial_state[i * 8 + 1] = (Math.random() - 0.5) * 0.1;
+			initial_state[i * 8 + 2] = -Math.random() * 0.1;
+			initial_state[i * 8 + 3] = Math.random() - 0.5;
+			initial_state[i * 8 + 4] = Math.random() - 0.5;
+			initial_state[i * 8 + 5] = Math.random() * 0.5;
 		} else if (unit === 1) {
 			initial_state[i * 8 + 0] = X_LOW + Math.random() * (X_HI - X_LOW);
 			initial_state[i * 8 + 1] = Y_LOW + Math.random() * (Y_HI - Y_LOW);
@@ -8301,7 +8341,11 @@ function adjacencies(adj) {
 			id++;
 		}
 	}
-};/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat */
+};
+
+// FILE SEPARATOR
+
+/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat */
 /* exported main */
 
 var projection;
@@ -8487,7 +8531,11 @@ function main() {
 	resize();
 
 	window.requestAnimationFrame(frame);
-};/* exported sphere_primitive */
+};
+
+// FILE SEPARATOR
+
+/* exported sphere_primitive */
 // From JTPointPhongSphere_PerFragment.js
 function sphere_primitive(offset, x, y, z) {
 	var SPHERE_DIV = 51;
@@ -8540,7 +8588,11 @@ function sphere_primitive(offset, x, y, z) {
 		vertices: positions,
 		indices: indices
 	};
-};/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, UNITS, FSIZE, grid, box, initialize, adjacencies */
+};
+
+// FILE SEPARATOR
+
+/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, UNITS, FSIZE, grid, box, initialize, adjacencies */
 /* exported init_system */
 
 function init_system(program_phys, program_calc, program_rk4o, program_draw, program_stat) {
@@ -8767,7 +8819,11 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	gl.enableVertexAttribArray(program_rk4o.a_rectangle);
 
 	return system;
-};/* global gl: true, canvas: true, mat4, projection */
+};
+
+// FILE SEPARATOR
+
+/* global gl: true, canvas: true, mat4, projection */
 /* exported createShader, createProgram, resize */
 function createShader(source, type) {
 

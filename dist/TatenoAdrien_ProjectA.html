@@ -364,7 +364,43 @@ void main() {
 	<canvas id="webgl" style="position: fixed; top: 0; left: 0;">
 		Your browser does not support HTML5.
 	</canvas>
-	<div id="help" style="background-color: white; position: fixed; top 0; right: 0; display: none; padding: 20pt; z-index: 10;">
+	<div id="help" style="background-color: white; position: fixed; bottom: 0; right: 0; display: none; margin: 0; padding: 20pt; z-index: 10;">
+		<ul>
+			<li>
+				Camera Controls
+				<ul>
+					<li>W - Forward</li>
+					<li>A - Left</li>
+					<li>S - Backward</li>
+					<li>D - Right</li>
+					<li>Q - Down</li>
+					<li>E - Up</li>
+					<li>Arrow Keys - Look Around</li>
+				</ul>
+			</li>
+			<li>
+				Control Panel Options
+				<ul>
+					<li>
+						Solver Mode (may affect performance)
+						<ul>
+							<li>Euler Method</li>
+							<li>Explicit Midpoint Method</li>
+							<li>4th Order Runge-Kutta Method</li>
+						</ul>
+					</li>
+					<li>Fire Position</li>
+					<li>Play/Pause Simulation</li>
+				</ul>
+			</li>
+			<li>
+				Particle Systems
+				<ul>
+					<li>Red/Orange/Yellow - Tornado (Vector Field)</li>
+					<li>Green - Boids (Flocking Behavior)</li>
+					<li>Magenta/Cyan - Decaying Point Source (Mass)</li>
+					<li>Red - Cloth Draping (Spring System)</li>
+		</ul>
 	</div>
 </body>
 </html>

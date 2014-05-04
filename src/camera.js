@@ -68,6 +68,9 @@ function init_camera() {
 		case 69:
 			camera.qe[1] = true;
 			break;
+		case 112:
+			document.getElementById('help').style.display = 'block';
+			break;
 		}
 	};
 
@@ -103,6 +106,9 @@ function init_camera() {
 			break;
 		case 69:
 			camera.qe[1] = false;
+			break;
+		case 112:
+			document.getElementById('help').style.display = 'none';
 			break;
 		}
 	};

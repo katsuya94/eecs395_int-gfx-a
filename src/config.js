@@ -15,3 +15,4 @@ var FSIZE	= new Float32Array([]).BYTES_PER_ELEMENT;
 
 var MODE = 0;
 var PAUSED = true;
+var FIXED_DELTA = false;

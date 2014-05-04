@@ -1,6 +1,8 @@
 /* jshint strict: false */
-/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat, init_static */
+/* canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat, init_static, FIXED_DELTA */
 /* exported main */
+
+var gl;
 
 function main() {
 
@@ -28,6 +30,9 @@ function main() {
 		PausePlay: function() {
 			PAUSED = !PAUSED;
 		},
+		FixedDelta: function() {
+			FIXED_DELTA = !FIXED_DELTA;
+		},
 		fire_x: -5.0,
 		fire_y: -5.0
 	};
@@ -36,6 +41,7 @@ function main() {
 		MODE = val;
 	});
 	gui.add(panel, 'PausePlay');
+	gui.add(panel, 'FixedDelta');
 	gui.add(panel, 'fire_x').min(-10).max(10).step(0.05);
 	gui.add(panel, 'fire_y').min(-10).max(10).step(0.05);
 
@@ -110,7 +116,7 @@ function main() {
 
 	var frame = function() {
 		var now	= Date.now();
-		var dt	= (now - last) / 1000.0;
+		var dt	= FIXED_DELTA ? 0.01 : ((now - last) / 1000.0);
 		last 	= now;
 
 		stats.begin();
@@ -182,7 +188,7 @@ function main() {
 		gl.drawElements(gl.TRIANGLES, system.sphere_index_size, gl.UNSIGNED_SHORT, 0);
 
 		stats.end();
-		window.requestAnimationFrame(frame);
+		window.requestAnimFrame(frame);
 	};
 
 	resize();

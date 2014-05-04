@@ -193,10 +193,10 @@ void main() {
 			int x = int(gl_FragCoord.x);
 			int y = int(gl_FragCoord.y);
 			if (x == 96 && y == 0) {
-				frag.xyz = vec3(0.0, 0.0, 10.0);
+				frag.xyz = vec3(-1.0, -1.0, 10.0);
 			}
 			if (x == 126 && y == 63) {
-				frag.xyz = vec3(8.0, 8.0, 10.0);
+				frag.xyz = vec3(-9.0, -9.0, 10.0);
 			}
 		}
 	} else {
@@ -389,8 +389,9 @@ void main() {
 							<li>4th Order Runge-Kutta Method</li>
 						</ul>
 					</li>
-					<li>Fire Position</li>
 					<li>Play/Pause Simulation</li>
+					<li>Fixed Delta (for accuracy)</li>
+					<li>Fire Position</li>
 				</ul>
 			</li>
 			<li>
@@ -400,6 +401,8 @@ void main() {
 					<li>Green - Boids (Flocking Behavior)</li>
 					<li>Magenta/Cyan - Decaying Point Source (Mass)</li>
 					<li>Red - Cloth Draping (Spring System)</li>
+				</ul>
+			</li>
 		</ul>
 	</div>
 </body>

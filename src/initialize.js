@@ -35,8 +35,8 @@ function initialize(initial_state) {
 			// Particle must be emitted
 			initial_state[i * 8 + 3] = -2.0;
 		} else if (unit === 3) {
-			initial_state[i * 8 + 0] = (Math.floor(count / 32) / 4) + 1.0;
-			initial_state[i * 8 + 1] = (count % 32) / 4 + 1.0;
+			initial_state[i * 8 + 0] = -(Math.floor(count / 32) / 4) - 1.0;
+			initial_state[i * 8 + 1] = -(count % 32) / 4 - 1.0;
 			initial_state[i * 8 + 2] = 10.0;
 			count++;
 		}

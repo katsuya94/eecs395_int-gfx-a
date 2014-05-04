@@ -8476,8 +8476,9 @@ function main() {
 
 		gl.uniformMatrix4fv(program_stat.u_vp, false, camera.vp);
 
-		gl.drawArrays(gl.LINES, 0, system.static_size - 72);
-		gl.drawArrays(gl.TRIANGLES, system.static_size - 72, 72);
+		gl.drawArrays(gl.LINES, 0, 6 + system.grid_size);
+		gl.drawArrays(gl.TRIANGLES, 6 + system.grid_size, 36);
+		gl.drawElements(gl.TRIANGLES, system.sphere_indices_length, gl.UNSIGNED_SHORT, 0);
 
 		stats.end();
 		window.requestAnimationFrame(frame);
@@ -8486,6 +8487,59 @@ function main() {
 	resize();
 
 	window.requestAnimationFrame(frame);
+};/* exported sphere_primitive */
+// From JTPointPhongSphere_PerFragment.js
+function sphere_primitive(offset, x, y, z) {
+	var SPHERE_DIV = 51;
+
+	var i, ai, si, ci;
+	var j, aj, sj, cj;
+	var p1, p2;
+
+	var positions = [];
+	var indices = [];
+
+	// Generate coordinates
+	for (j = 0; j <= SPHERE_DIV; j++) {
+		aj = j * Math.PI / SPHERE_DIV;
+		sj = Math.sin(aj);
+		cj = Math.cos(aj);
+		for (i = 0; i <= SPHERE_DIV; i++) {
+			ai = i * 2 * Math.PI / SPHERE_DIV;
+			si = Math.sin(ai);
+			ci = Math.cos(ai);
+
+			// Positions
+			positions.push(2 * si * sj + x);
+			positions.push(2 * cj + y);
+			positions.push(2 * ci * sj + z);
+			// Colors
+			positions.push(si * sj * 0.5 + 0.5);
+			positions.push(si * sj * 0.5 + 0.5);
+			positions.push(si * sj * 0.5 + 0.5);
+		}
+	}
+
+	// Generate indices
+	for (j = 0; j < SPHERE_DIV; j++) {
+		for (i = 0; i < SPHERE_DIV; i++) {
+			p1 = j * (SPHERE_DIV+1) + i;
+			p2 = p1 + (SPHERE_DIV+1);
+
+			indices.push(p1 + offset);
+			indices.push(p2 + offset);
+			indices.push(p1 + 1 + offset);
+
+			indices.push(p1 + 1 + offset);
+			indices.push(p2 + offset);
+			indices.push(p2 + 1 + offset);
+		}
+	}
+
+	return {
+		vertices: positions,
+		indices: indices
+	};
 };/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, UNITS, FSIZE, grid, box, initialize, adjacencies */
 /* exported init_system */
 
@@ -8536,6 +8590,10 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	program_stat.a_position = gl.getAttribLocation(program_stat, 'a_position');
 	program_stat.a_vertcolor = gl.getAttribLocation(program_stat, 'a_vertcolor');
 
+	var grid_positions = grid();
+	system.grid_size = grid_positions.length / 6;
+	var sphere = sphere_primitive(system.grid_size + 42, -5.0, -5.0, 7.5);
+
 	// Static Stuff
 	var values = new Float32Array([
 		// Axes
@@ -8545,8 +8603,12 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 		0.0, 2.0, 0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
 		0.0, 0.0, 2.0, 0.0, 0.0, 1.0,
-	].concat(grid()).concat(box(-5.0, -5.0, 7.5)).concat(box(5.0, 5.0, 7.5)));
-	system.static_size = Math.round(values.length / 6);
+	].concat(grid_positions).concat(box(5.0, 5.0, 7.5)).concat(sphere.vertices));
+
+	var indices = new Uint16Array(sphere.indices);
+	console.log(indices);
+	system.sphere_indices_length = sphere.indices.length;
+
 	system.buffer_static = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_static);
 	gl.bufferData(gl.ARRAY_BUFFER, values, gl.STATIC_DRAW);
@@ -8555,21 +8617,15 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	gl.enableVertexAttribArray(program_stat.a_position);
 	gl.enableVertexAttribArray(program_stat.a_vertcolor);
 
+	system.buffer_static_index = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, system.buffer_static_index);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
 	var initial_state	= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
 	var adjacent		= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
 
 	initialize(initial_state);
 	adjacencies(adjacent);
-
-	temp = Array.prototype.slice.call(adjacent);
-	ADJ = [];
-
-	for (var i = 0; i < 64; i++) {
-		ADJ.push([]);
-		for (var j = 0; j < 64; j++) {
-			ADJ[i].push(temp.slice(STATE_TEXTURE_WIDTH * i + j * 8, STATE_TEXTURE_WIDTH * i + j * 8 + 8));
-		}
-	}
 
 	// Textures
 	var texture_adjacent = gl.createTexture();

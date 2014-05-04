@@ -237,19 +237,7 @@ void main() {
 				(relative.z > 1.75 && frag.z < 0.0) || (relative.z < -1.75 && frag.z > 0.0) ? -1.0 : 1.0);
 			frag.xyz = frag.xyz * multiplier;
 		}
-		if (position.x > -BOX_X_HI &&
-			position.x < -BOX_X_LOW &&
-			position.y > -BOX_Y_HI &&
-			position.y < -BOX_Y_LOW &&
-			position.z < BOX_Z_HI &&
-			position.z > BOX_Z_LOW) {
-			vec3 relative = position - vec3(-5.0, -5.0, 7.5);
-			vec3 multiplier = vec3(
-				(relative.x > 1.75 && frag.x < 0.0) || (relative.x < -1.75 && frag.x > 0.0) ? -1.0 : 1.0,
-				(relative.y > 1.75 && frag.y < 0.0) || (relative.y < -1.75 && frag.y > 0.0) ? -1.0 : 1.0,
-				(relative.z > 1.75 && frag.z < 0.0) || (relative.z < -1.75 && frag.z > 0.0) ? -1.0 : 1.0);
-			frag.xyz = frag.xyz * multiplier;
-		}
+		
 	}
 
 	gl_FragColor = frag;

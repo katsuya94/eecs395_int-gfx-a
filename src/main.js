@@ -174,8 +174,9 @@ function main() {
 
 		gl.uniformMatrix4fv(program_stat.u_vp, false, camera.vp);
 
-		gl.drawArrays(gl.LINES, 0, system.static_size - 72);
-		gl.drawArrays(gl.TRIANGLES, system.static_size - 72, 72);
+		gl.drawArrays(gl.LINES, 0, 6 + system.grid_size);
+		gl.drawArrays(gl.TRIANGLES, 6 + system.grid_size, 36);
+		gl.drawElements(gl.TRIANGLES, system.sphere_indices_length, gl.UNSIGNED_SHORT, 0);
 
 		stats.end();
 		window.requestAnimationFrame(frame);

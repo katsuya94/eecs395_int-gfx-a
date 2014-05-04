@@ -49,6 +49,10 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	program_stat.a_position = gl.getAttribLocation(program_stat, 'a_position');
 	program_stat.a_vertcolor = gl.getAttribLocation(program_stat, 'a_vertcolor');
 
+	var grid_positions = grid();
+	system.grid_size = grid_positions.length / 6;
+	var sphere = sphere_primitive(system.grid_size + 42, -5.0, -5.0, 7.5);
+
 	// Static Stuff
 	var values = new Float32Array([
 		// Axes
@@ -58,8 +62,12 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 		0.0, 2.0, 0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
 		0.0, 0.0, 2.0, 0.0, 0.0, 1.0,
-	].concat(grid()).concat(box(-5.0, -5.0, 7.5)).concat(box(5.0, 5.0, 7.5)));
-	system.static_size = Math.round(values.length / 6);
+	].concat(grid_positions).concat(box(5.0, 5.0, 7.5)).concat(sphere.vertices));
+
+	var indices = new Uint16Array(sphere.indices);
+	console.log(indices);
+	system.sphere_indices_length = sphere.indices.length;
+
 	system.buffer_static = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_static);
 	gl.bufferData(gl.ARRAY_BUFFER, values, gl.STATIC_DRAW);
@@ -68,21 +76,15 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	gl.enableVertexAttribArray(program_stat.a_position);
 	gl.enableVertexAttribArray(program_stat.a_vertcolor);
 
+	system.buffer_static_index = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, system.buffer_static_index);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
 	var initial_state	= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
 	var adjacent		= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
 
 	initialize(initial_state);
 	adjacencies(adjacent);
-
-	temp = Array.prototype.slice.call(adjacent);
-	ADJ = [];
-
-	for (var i = 0; i < 64; i++) {
-		ADJ.push([]);
-		for (var j = 0; j < 64; j++) {
-			ADJ[i].push(temp.slice(STATE_TEXTURE_WIDTH * i + j * 8, STATE_TEXTURE_WIDTH * i + j * 8 + 8));
-		}
-	}
 
 	// Textures
 	var texture_adjacent = gl.createTexture();

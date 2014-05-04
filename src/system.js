@@ -53,11 +53,11 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	var values = new Float32Array([
 		// Axes
 		0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-		1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+		2.0, 0.0, 0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-		0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+		0.0, 2.0, 0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-		0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+		0.0, 0.0, 2.0, 0.0, 0.0, 1.0,
 	].concat(grid()).concat(box(-5.0, -5.0, 7.5)).concat(box(5.0, 5.0, 7.5)));
 	system.static_size = Math.round(values.length / 6);
 	system.buffer_static = gl.createBuffer();

@@ -11,7 +11,7 @@ void main() {
 
 	</script>
 	<script id="phys-fs" type="x-shader/x-vertex">
-precision mediump float;
+precision highp float;
 
 uniform sampler2D u_state;
 uniform sampler2D u_dot;
@@ -117,7 +117,7 @@ void main() {
 				if (distance > 0.25)
 					force += normalize(displacement) * (distance - 0.25);
 			}
-			gl_FragColor = vec4(force * 100.0 + vec3(0.0, 0.0, -0.00001), 0.0);
+			gl_FragColor = vec4(force * 250.0 + vec3(0.0, 0.0, -10.0) - 50.0 * velocity, 0.0);
 		}
 	}
 }
@@ -136,7 +136,7 @@ void main() {
 	</script>
 	<script id="calc-fs" type="x-shader/x-vertex">
 
-precision mediump float;
+precision highp float;
 
 uniform sampler2D u_dot;
 uniform sampler2D u_state;
@@ -194,62 +194,60 @@ void main() {
 			int x = int(gl_FragCoord.x);
 			int y = int(gl_FragCoord.y);
 			if (x == 96 && y == 0) {
-				frag.xyz = vec3(0.0, 0.0, 20.0);
+				frag.xyz = vec3(0.0, 0.0, 10.0);
 			}
 			if (x == 126 && y == 63) {
-				frag.xyz = vec3(8.0, 8.0, 20.0);
+				frag.xyz = vec3(8.0, 8.0, 10.0);
 			}
 		}
 	} else {
-		if (unit != 3) {
-			vec3 position = texel(vec2(-1.0, 0.0)).xyz;
-			if (unit == 2) {
-				float phase = texel(vec2(-1.0, 0.0)).w;
-				if (phase < -1.0) {
-					frag = vec4(1.0 * rand(frag.xy) - 0.5, 1.0 * rand(frag.yz) - 0.5, 1.0 * rand(frag.zx) - 0.5, -4.0);
-				}
-			} else {
-				if (position.x > BOUND && frag.x > 0.0)
-					frag.x = -frag.x;
-				else if (position.x < -BOUND && frag.x < 0.0)
-					frag.x = -frag.x;
-				else if (position.y > BOUND && frag.y > 0.0)
-					frag.y = -frag.y;
-				else if (position.y < -BOUND && frag.y < 0.0)
-					frag.y = -frag.y;
-				else if (position.z < LOW && frag.z < 0.0)
+		vec3 position = texel(vec2(-1.0, 0.0)).xyz;
+		if (unit == 2) {
+			float phase = texel(vec2(-1.0, 0.0)).w;
+			if (phase < -1.0) {
+				frag = vec4(1.0 * rand(frag.xy) - 0.5, 1.0 * rand(frag.yz) - 0.5, 1.0 * rand(frag.zx) - 0.5, -4.0);
+			}
+		} else {
+			if (position.x > BOUND && frag.x > 0.0)
+				frag.x = -frag.x;
+			else if (position.x < -BOUND && frag.x < 0.0)
+				frag.x = -frag.x;
+			else if (position.y > BOUND && frag.y > 0.0)
+				frag.y = -frag.y;
+			else if (position.y < -BOUND && frag.y < 0.0)
+				frag.y = -frag.y;
+			else if (position.z < LOW && frag.z < 0.0)
+				frag.z = -frag.z;
+			if (unit > 0 ) {
+				if (position.z > HI && frag.z > 0.0)
 					frag.z = -frag.z;
-				if (unit > 0 ) {
-					if (position.z > HI && frag.z > 0.0)
-						frag.z = -frag.z;
-				}
 			}
-			if (position.x < BOX_X_HI &&
-				position.x > BOX_X_LOW &&
-				position.y < BOX_Y_HI &&
-				position.y > BOX_Y_LOW &&
-				position.z < BOX_Z_HI &&
-				position.z > BOX_Z_LOW) {
-				vec3 relative = position - vec3(5.0, 5.0, 7.5);
-				vec3 multiplier = vec3(
-					(relative.x > 1.75 && frag.x < 0.0) || (relative.x < -1.75 && frag.x > 0.0) ? -1.0 : 1.0,
-					(relative.y > 1.75 && frag.y < 0.0) || (relative.y < -1.75 && frag.y > 0.0) ? -1.0 : 1.0,
-					(relative.z > 1.75 && frag.z < 0.0) || (relative.z < -1.75 && frag.z > 0.0) ? -1.0 : 1.0);
-				frag.xyz = frag.xyz * multiplier;
-			}
-			if (position.x > -BOX_X_HI &&
-				position.x < -BOX_X_LOW &&
-				position.y > -BOX_Y_HI &&
-				position.y < -BOX_Y_LOW &&
-				position.z < BOX_Z_HI &&
-				position.z > BOX_Z_LOW) {
-				vec3 relative = position - vec3(-5.0, -5.0, 7.5);
-				vec3 multiplier = vec3(
-					(relative.x > 1.75 && frag.x < 0.0) || (relative.x < -1.75 && frag.x > 0.0) ? -1.0 : 1.0,
-					(relative.y > 1.75 && frag.y < 0.0) || (relative.y < -1.75 && frag.y > 0.0) ? -1.0 : 1.0,
-					(relative.z > 1.75 && frag.z < 0.0) || (relative.z < -1.75 && frag.z > 0.0) ? -1.0 : 1.0);
-				frag.xyz = frag.xyz * multiplier;
-			}
+		}
+		if (position.x < BOX_X_HI &&
+			position.x > BOX_X_LOW &&
+			position.y < BOX_Y_HI &&
+			position.y > BOX_Y_LOW &&
+			position.z < BOX_Z_HI &&
+			position.z > BOX_Z_LOW) {
+			vec3 relative = position - vec3(5.0, 5.0, 7.5);
+			vec3 multiplier = vec3(
+				(relative.x > 1.75 && frag.x < 0.0) || (relative.x < -1.75 && frag.x > 0.0) ? -1.0 : 1.0,
+				(relative.y > 1.75 && frag.y < 0.0) || (relative.y < -1.75 && frag.y > 0.0) ? -1.0 : 1.0,
+				(relative.z > 1.75 && frag.z < 0.0) || (relative.z < -1.75 && frag.z > 0.0) ? -1.0 : 1.0);
+			frag.xyz = frag.xyz * multiplier;
+		}
+		if (position.x > -BOX_X_HI &&
+			position.x < -BOX_X_LOW &&
+			position.y > -BOX_Y_HI &&
+			position.y < -BOX_Y_LOW &&
+			position.z < BOX_Z_HI &&
+			position.z > BOX_Z_LOW) {
+			vec3 relative = position - vec3(-5.0, -5.0, 7.5);
+			vec3 multiplier = vec3(
+				(relative.x > 1.75 && frag.x < 0.0) || (relative.x < -1.75 && frag.x > 0.0) ? -1.0 : 1.0,
+				(relative.y > 1.75 && frag.y < 0.0) || (relative.y < -1.75 && frag.y > 0.0) ? -1.0 : 1.0,
+				(relative.z > 1.75 && frag.z < 0.0) || (relative.z < -1.75 && frag.z > 0.0) ? -1.0 : 1.0);
+			frag.xyz = frag.xyz * multiplier;
 		}
 	}
 
@@ -271,7 +269,7 @@ void main() {
 	</script>
 	<script id="rk4o-fs" type="x-shader/x-vertex">
 
-precision mediump float;
+precision highp float;
 
 uniform sampler2D u_dot1;
 uniform sampler2D u_dot2;

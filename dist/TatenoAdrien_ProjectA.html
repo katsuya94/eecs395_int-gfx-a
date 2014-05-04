@@ -86,7 +86,7 @@ void main() {
 			gl_FragColor = vec4(force, 0.0);
 		} else if (unit == 2) {
 			gl_FragColor = vec4(0.0, 0.0, 1.0, 0.0);
-		} else if (unit == 3) {
+		} else {
 			vec3 velocity = rel_texel(vec2(0.0, 0.0)).xyz;
 			vec3 force = vec3(0.0, 0.0, 0.0);
 			vec3 displacement;
@@ -169,8 +169,6 @@ void main() {
 	int unit = int(gl_FragCoord.x) / 32;
 	int slot = int(mod(gl_FragCoord.x, 2.0));
 
-	
-
 	vec2 texcoord = gl_FragCoord.xy / u_viewport;
 
 	// Euler method
@@ -181,7 +179,7 @@ void main() {
 		if (unit == 0) {
 			// Loop upper bound back to origin
 			if (frag.z > HI)
-				frag.xyz /= vec3(10.0, 10.0, 40.0);
+				frag.xyz = 0.1 * vec3(rand(texcoord) - 0.5, rand(frag.xy) - 0.5, -rand(frag.yz));
 		} if (unit == 2) {
 			// Calculate mass dissapation
 			if (frag.w < 0.01) {
@@ -202,6 +200,9 @@ void main() {
 		}
 	} else {
 		vec3 position = texel(vec2(-1.0, 0.0)).xyz;
+		if (unit == 0 && position.z < 0.0) {
+			vec3(rand(texcoord) - 0.5, rand(frag.xy) - 0.5, 0.5 * rand(frag.yz));
+		}
 		if (unit == 2) {
 			float phase = texel(vec2(-1.0, 0.0)).w;
 			if (phase < -1.0) {
@@ -294,7 +295,7 @@ void main() {
 	<!-- DRAWING PROGRAM -->
 	<script id="draw-vs" type="x-shader/x-fragment">
 
-attribute vec2 a_reference;
+attribute vec3 a_reference;
 
 uniform sampler2D u_state;
 uniform vec2 u_viewport;
@@ -304,11 +305,20 @@ uniform mat4 u_vp;
 varying vec4 v_color;
 
 void main() {
-	int unit = int(a_reference.x * u_viewport.x) / 32;
-	vec4 position = texture2D(u_state, a_reference);
-	v_color = vec4((unit == 0 ? 1.0 : 0.0) + sqrt(position.w / 2.0), unit == 1 || unit == 3 ? 1.0 : 0.0, unit == 2 || unit == 3 ? 1.0 : 0.0, 1.0);
+	int unit = int(a_reference.z);
+	vec4 position = texture2D(u_state, a_reference.xy);
+	vec4 velocity = texture2D(u_state, a_reference.xy + vec2(0.0, 1.0));
+	if (unit == 0) {
+		v_color = vec4(1.0, length(velocity.xyz) / 10.0, 0.0, 1.0);
+	} else if (unit == 1) {
+		v_color = vec4(0.0, length(velocity.xyz) / 10.0, 1.0, 1.0);
+	} else if (unit == 2) {
+		v_color = vec4(position.w, 1.0 - position.w, position.w, 1.0);
+	} else {
+		v_color = vec4(1.0, 0.0, 0.0, 1.0);
+	}
 	gl_Position = u_vp * vec4(position.xyz, 1.0);
-	gl_PointSize = 2.0;
+	gl_PointSize = 5.0 + position.w * 2.0 - gl_Position.z * 0.05;
 }
 
 	</script>
@@ -319,6 +329,8 @@ precision mediump float;
 varying vec4 v_color;
 
 void main() {
+	if (length(gl_PointCoord - vec2(0.5, 0.5)) > 0.5)
+		discard;
 	gl_FragColor = v_color;
 }
 

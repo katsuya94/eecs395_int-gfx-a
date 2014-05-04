@@ -1,5 +1,5 @@
 /* jshint strict: false */
-/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, FSIZE, grid, box, initialize, adjacencies */
+/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, UNITS, FSIZE, grid, box, initialize, adjacencies */
 /* exported init_system */
 
 function init_system(program_phys, program_calc, program_rk4o, program_draw, program_stat) {
@@ -196,12 +196,13 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	gl.bindFramebuffer(gl.FRAMEBUFFER, system.fb_dot4);
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture_dot4, 0);
 
-	var reference	= new Float32Array(NUM_PARTICLES * 2);
+	var reference	= new Float32Array(NUM_PARTICLES * 3);
 	var interval	= 1.0 / PARTICLES_PER_ROW;
 
 	for (var i = 0; i < NUM_PARTICLES; i++) {
-		reference[i * 2]		= interval * ~~(i % PARTICLES_PER_ROW);
-		reference[i * 2 + 1]	= interval * ~~(i / PARTICLES_PER_ROW);
+		reference[i * 3]		= interval * ~~(i % PARTICLES_PER_ROW);
+		reference[i * 3 + 1]	= interval * ~~(i / PARTICLES_PER_ROW);
+		reference[i * 3 + 2]	= ~~((i % PARTICLES_PER_ROW) / (PARTICLES_PER_ROW / UNITS));
 	}
 
 	system.buffer_reference = gl.createBuffer();

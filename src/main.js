@@ -162,7 +162,7 @@ function main() {
 		gl.uniformMatrix4fv(program_draw.u_vp, false, camera.vp);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_reference);
-		gl.vertexAttribPointer(program_draw.a_reference, 2, gl.FLOAT, false, 0, 0);
+		gl.vertexAttribPointer(program_draw.a_reference, 3, gl.FLOAT, false, 0, 0);
 
 		gl.drawArrays(gl.POINTS, 0, NUM_PARTICLES);
 

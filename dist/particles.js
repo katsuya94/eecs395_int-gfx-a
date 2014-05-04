@@ -8196,6 +8196,7 @@ function init_camera() {
 
 var NUM_PARTICLES			= Math.pow(64, 2);
 var NUM_SLOTS				= 2;
+var UNITS					= 4;
 var PARTICLES_PER_ROW		= Math.sqrt(NUM_PARTICLES);
 var STATE_TEXTURE_WIDTH		= PARTICLES_PER_ROW * NUM_SLOTS;
 var STATE_TEXTURE_HEIGHT	= PARTICLES_PER_ROW;
@@ -8463,7 +8464,7 @@ function main() {
 		gl.uniformMatrix4fv(program_draw.u_vp, false, camera.vp);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_reference);
-		gl.vertexAttribPointer(program_draw.a_reference, 2, gl.FLOAT, false, 0, 0);
+		gl.vertexAttribPointer(program_draw.a_reference, 3, gl.FLOAT, false, 0, 0);
 
 		gl.drawArrays(gl.POINTS, 0, NUM_PARTICLES);
 
@@ -8485,7 +8486,7 @@ function main() {
 	resize();
 
 	window.requestAnimationFrame(frame);
-};/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, FSIZE, grid, box, initialize, adjacencies */
+};/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, UNITS, FSIZE, grid, box, initialize, adjacencies */
 /* exported init_system */
 
 function init_system(program_phys, program_calc, program_rk4o, program_draw, program_stat) {
@@ -8682,12 +8683,13 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	gl.bindFramebuffer(gl.FRAMEBUFFER, system.fb_dot4);
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture_dot4, 0);
 
-	var reference	= new Float32Array(NUM_PARTICLES * 2);
+	var reference	= new Float32Array(NUM_PARTICLES * 3);
 	var interval	= 1.0 / PARTICLES_PER_ROW;
 
 	for (var i = 0; i < NUM_PARTICLES; i++) {
-		reference[i * 2]		= interval * ~~(i % PARTICLES_PER_ROW);
-		reference[i * 2 + 1]	= interval * ~~(i / PARTICLES_PER_ROW);
+		reference[i * 3]		= interval * ~~(i % PARTICLES_PER_ROW);
+		reference[i * 3 + 1]	= interval * ~~(i / PARTICLES_PER_ROW);
+		reference[i * 3 + 2]	= ~~((i % PARTICLES_PER_ROW) / (PARTICLES_PER_ROW / UNITS));
 	}
 
 	system.buffer_reference = gl.createBuffer();

@@ -1,5 +1,5 @@
 /* jshint strict: false */
-/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, RUNGE_KUTTA, resize */
+/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat */
 /* exported main */
 
 function main() {
@@ -24,9 +24,7 @@ function main() {
 
 	// dat.GUI
 	var panel = {
-		ToggleSolver: function() {
-			RUNGE_KUTTA = !RUNGE_KUTTA;
-		},
+		Mode: 0,
 		PausePlay: function() {
 			PAUSED = !PAUSED;
 		},
@@ -34,7 +32,9 @@ function main() {
 		fire_y: -5.0
 	};
 	var gui = new dat.GUI();
-	gui.add(panel, 'ToggleSolver');
+	gui.add(panel, 'Mode', { Euler: 0, Midpoint: 1, RK4: 2 }).onChange(function(val) {
+		MODE = val;
+	});
 	gui.add(panel, 'PausePlay');
 	gui.add(panel, 'fire_x').min(-10).max(10).step(0.05);
 	gui.add(panel, 'fire_y').min(-10).max(10).step(0.05);
@@ -46,9 +46,9 @@ function main() {
 	var program_calc = createProgram(
 		document.getElementById('calc-vs').text,
 		document.getElementById('calc-fs').text);
-	var program_slvr = createProgram(
-		document.getElementById('slvr-vs').text,
-		document.getElementById('slvr-fs').text);
+	var program_rk4o = createProgram(
+		document.getElementById('rk4o-vs').text,
+		document.getElementById('rk4o-fs').text);
 	var program_draw = createProgram(
 		document.getElementById('draw-vs').text,
 		document.getElementById('draw-fs').text);
@@ -56,8 +56,8 @@ function main() {
 		document.getElementById('stat-vs').text,
 		document.getElementById('stat-fs').text);
 
-	// Set Up Render2Texture
-	var system = init_system(program_phys, program_calc, program_slvr, program_draw, program_stat);
+	// Set Up Render To Texture
+	var system = init_system(program_phys, program_calc, program_rk4o, program_draw, program_stat);
 
 	// Set up Camera (TODO)
 	var camera = init_camera();
@@ -70,6 +70,33 @@ function main() {
 		gl.bindFramebuffer(gl.FRAMEBUFFER, target_dot);
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 	};
+
+	var solvers = [
+		function() {
+			// Euler Method
+			solve(0, system.fb_dot1, 0.0);
+		},
+		function(dt) {
+			// Explicit Midpoint Method
+			solve(0, system.fb_dot2, 0.0);
+			solve(2, system.fb_dot1, dt / 2.0);
+		},
+		function(dt) {
+			// Runge-Kutta 4
+			solve(0, system.fb_dot1, 0.0);
+			solve(1, system.fb_dot2, dt / 2.0);
+			solve(2, system.fb_dot3, dt / 2.0);
+			solve(3, system.fb_dot4, dt);
+
+			gl.useProgram(program_rk4o);
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
+			gl.vertexAttribPointer(program_rk4o.a_rectangle, 2, gl.FLOAT, false, 0, 0);
+
+			gl.bindFramebuffer(gl.FRAMEBUFFER, system.fb_dot1);
+			gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+		}
+	];
 
 	var last = Date.now();
 
@@ -92,24 +119,7 @@ function main() {
 			gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
 			gl.vertexAttribPointer(program_phys.a_rectangle, 2, gl.FLOAT, false, 0, 0);
 
-			if (!RUNGE_KUTTA) {
-				//EULER
-				solve(1, system.fb_dot1, 0.0);
-			} else {
-				//RUNGE KUTTA
-				solve(0, system.fb_dot1, 0.0);
-				solve(1, system.fb_dot2, dt / 2.0);
-				solve(2, system.fb_dot3, dt / 2.0);
-				solve(3, system.fb_dot4, dt);
-
-				gl.useProgram(program_slvr);
-
-				gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_rectangle);
-				gl.vertexAttribPointer(program_slvr.a_rectangle, 2, gl.FLOAT, false, 0, 0);
-
-				gl.bindFramebuffer(gl.FRAMEBUFFER, system.fb_dot1);
-				gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-			}
+			solvers[MODE](dt);
 
 			// CALCULATION
 			gl.useProgram(program_calc);

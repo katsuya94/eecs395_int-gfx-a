@@ -1,6 +1,6 @@
 /* jshint strict: false */
 /* global NUM_PARTICLES */
-/* exported initialize */
+/* exported initialize, adjacencies */
 
 var X_HI	= 10.0;
 var X_LOW	= -10.0;
@@ -9,14 +9,8 @@ var Y_LOW	= -10.0;
 var Z_HI	= 20.0;
 var Z_LOW	= 0.0;
 
-var BOID_X	= 5.0;
-var BOID_Y	= 5.0;
-var BOID_Z	= 5.0;
-var BOID_R	= 0.5;
-
 var TORNADO_COLUMN = 1.0 / 16.0;
 
-var VELOCITY = 2.0;
 var R_VELOCITY = 5.0;
 
 function initialize(initial_state) {
@@ -38,11 +32,53 @@ function initialize(initial_state) {
 			// Particle must be emitted
 			initial_state[i * 8 + 3] = -2.0;
 		} else if (unit === 3) {
-			initial_state[i * 8 + 0] = Math.floor(count / 64) - 8;
-			initial_state[i * 8 + 1] = Math.floor((count % 64) / 8) - 4;
-			initial_state[i * 8 + 2] = (count % 64) % 8 - 32;
+			initial_state[i * 8 + 0] = (Math.floor(count / 32) / 4);
+			initial_state[i * 8 + 1] = (count % 32) / 4;
+			initial_state[i * 8 + 2] = 20.0;
 			count++;
 		}
 	}
-	console.log(count);
+}
+
+function adjacencies(adj) {
+	var id = 0;
+	var tex_x = function(x, y) {
+		return 96 + (x % 16) * 2;
+	};
+	var tex_y = function(x, y) {
+		return y * 2 + Math.floor(x / 16);
+	};
+	for (var i = 0; i < NUM_PARTICLES; i++) {
+		var unit = Math.floor((i % 64) / 16);
+		if (unit === 3) {
+			for (var j = 0; j < 8; j++) {
+				adj[i * 8 + j] = -1;
+			}
+
+			var x = id % 32;
+			var y = Math.floor(id / 32);
+
+			if (y > 0) {
+				adj[i * 8 + 0] = tex_x(x, y - 1);
+				adj[i * 8 + 1] = tex_y(x, y - 1);
+			}
+
+			if (y < 31) {
+				adj[i * 8 + 2] = tex_x(x, y + 1);
+				adj[i * 8 + 3] = tex_y(x, y + 1);
+			}
+
+			if (x > 0) {
+				adj[i * 8 + 4] = tex_x(x - 1, y);
+				adj[i * 8 + 5] = tex_y(x - 1, y);
+			}
+
+			if (x < 31) {
+				adj[i * 8 + 6] = tex_x(x + 1, y);
+				adj[i * 8 + 7] = tex_y(x + 1, y);
+			}
+
+			id++;
+		}
+	}
 }

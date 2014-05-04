@@ -1,8 +1,8 @@
 /* jshint strict: false */
-/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, FSIZE, grid, box, initialize */
+/* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, FSIZE, grid, box, initialize, adjacencies */
 /* exported init_system */
 
-function init_system(program_phys, program_calc, program_slvr, program_draw, program_stat) {
+function init_system(program_phys, program_calc, program_rk4o, program_draw, program_stat) {
 	var system = {};
 
 	// Uniforms
@@ -10,7 +10,7 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 	program_calc.u_dt		= gl.getUniformLocation(program_calc, 'u_dt');
 	program_phys.u_viewport	= gl.getUniformLocation(program_phys, 'u_viewport');
 	program_calc.u_viewport	= gl.getUniformLocation(program_calc, 'u_viewport');
-	program_slvr.u_viewport	= gl.getUniformLocation(program_slvr, 'u_viewport');
+	program_rk4o.u_viewport	= gl.getUniformLocation(program_rk4o, 'u_viewport');
 	program_draw.u_viewport	= gl.getUniformLocation(program_draw, 'u_viewport');
 
 	program_phys.u_state	= gl.getUniformLocation(program_phys, 'u_state');
@@ -18,29 +18,33 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 	program_phys.u_dot		= gl.getUniformLocation(program_phys, 'u_dot');
 	program_calc.u_dot		= gl.getUniformLocation(program_calc, 'u_dot');
 	program_draw.u_state	= gl.getUniformLocation(program_draw, 'u_state');
-	program_slvr.u_dot1		= gl.getUniformLocation(program_slvr, 'u_dot1');
-	program_slvr.u_dot2		= gl.getUniformLocation(program_slvr, 'u_dot2');
-	program_slvr.u_dot3		= gl.getUniformLocation(program_slvr, 'u_dot3');
-	program_slvr.u_dot4		= gl.getUniformLocation(program_slvr, 'u_dot4');
+
+	// Runge-Kutta 4th Order
+	program_rk4o.u_dot1		= gl.getUniformLocation(program_rk4o, 'u_dot1');
+	program_rk4o.u_dot2		= gl.getUniformLocation(program_rk4o, 'u_dot2');
+	program_rk4o.u_dot3		= gl.getUniformLocation(program_rk4o, 'u_dot3');
+	program_rk4o.u_dot4		= gl.getUniformLocation(program_rk4o, 'u_dot4');
 
 	program_draw.u_vp		= gl.getUniformLocation(program_draw, 'u_vp');
 	program_stat.u_vp		= gl.getUniformLocation(program_stat, 'u_vp');
 
 	program_calc.u_fire		= gl.getUniformLocation(program_calc, 'u_fire');
 
+	program_phys.u_adjacencies = gl.getUniformLocation(program_phys, 'u_adjacencies');
+
 	gl.useProgram(program_phys);
 	gl.uniform2f(program_phys.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
 	gl.useProgram(program_calc);
 	gl.uniform2f(program_calc.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
-	gl.useProgram(program_slvr);
-	gl.uniform2f(program_slvr.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
+	gl.useProgram(program_rk4o);
+	gl.uniform2f(program_rk4o.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
 	gl.useProgram(program_draw);
 	gl.uniform2f(program_draw.u_viewport, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT);
 
 	// Attributes
 	program_phys.a_rectangle = gl.getAttribLocation(program_phys, 'a_rectangle');
 	program_calc.a_rectancle = gl.getAttribLocation(program_calc, 'a_rectangle');
-	program_slvr.a_rectancle = gl.getAttribLocation(program_slvr, 'a_rectangle');
+	program_rk4o.a_rectancle = gl.getAttribLocation(program_rk4o, 'a_rectangle');
 	program_draw.a_reference = gl.getAttribLocation(program_draw, 'a_reference');
 	program_stat.a_position = gl.getAttribLocation(program_stat, 'a_position');
 	program_stat.a_vertcolor = gl.getAttribLocation(program_stat, 'a_vertcolor');
@@ -64,11 +68,37 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 	gl.enableVertexAttribArray(program_stat.a_position);
 	gl.enableVertexAttribArray(program_stat.a_vertcolor);
 
-	var initial_state = new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
+	var initial_state	= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
+	var adjacent		= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
 
 	initialize(initial_state);
+	adjacencies(adjacent);
+
+	temp = Array.prototype.slice.call(adjacent);
+	ADJ = [];
+
+	for (var i = 0; i < 64; i++) {
+		ADJ.push([]);
+		for (var j = 0; j < 64; j++) {
+			ADJ[i].push(temp.slice(STATE_TEXTURE_WIDTH * i + j * 8, STATE_TEXTURE_WIDTH * i + j * 8 + 8));
+		}
+	}
 
 	// Textures
+	var texture_adjacent = gl.createTexture();
+	gl.activeTexture(gl.TEXTURE5);
+	gl.bindTexture(gl.TEXTURE_2D, texture_adjacent);
+
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, 0, gl.RGBA, gl.FLOAT, adjacent);
+
+	gl.useProgram(program_phys);
+	gl.uniform1i(program_phys.u_adjacencies, 5);
+
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
 	var texture_state = gl.createTexture();
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, texture_state);
@@ -95,8 +125,8 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 	gl.uniform1i(program_phys.u_dot, 1);
 	gl.useProgram(program_calc);
 	gl.uniform1i(program_calc.u_dot, 1);
-	gl.useProgram(program_slvr);
-	gl.uniform1i(program_slvr.u_dot1, 1);
+	gl.useProgram(program_rk4o);
+	gl.uniform1i(program_rk4o.u_dot1, 1);
 
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -109,8 +139,8 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, 0, gl.RGBA, gl.FLOAT, initial_state);
 
-	gl.useProgram(program_slvr);
-	gl.uniform1i(program_slvr.u_dot2, 2);
+	gl.useProgram(program_rk4o);
+	gl.uniform1i(program_rk4o.u_dot2, 2);
 
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -123,8 +153,8 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, 0, gl.RGBA, gl.FLOAT, initial_state);
 
-	gl.useProgram(program_slvr);
-	gl.uniform1i(program_slvr.u_dot3, 3);
+	gl.useProgram(program_rk4o);
+	gl.uniform1i(program_rk4o.u_dot3, 3);
 
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -137,8 +167,8 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, 0, gl.RGBA, gl.FLOAT, initial_state);
 
-	gl.useProgram(program_slvr);
-	gl.uniform1i(program_slvr.u_dot4, 4);
+	gl.useProgram(program_rk4o);
+	gl.uniform1i(program_rk4o.u_dot4, 4);
 
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -190,7 +220,7 @@ function init_system(program_phys, program_calc, program_slvr, program_draw, pro
 	]), gl.STATIC_DRAW);
 	gl.enableVertexAttribArray(program_phys.a_rectangle);
 	gl.enableVertexAttribArray(program_calc.a_rectangle);
-	gl.enableVertexAttribArray(program_slvr.a_rectangle);
+	gl.enableVertexAttribArray(program_rk4o.a_rectangle);
 
 	return system;
 }

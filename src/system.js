@@ -2,9 +2,7 @@
 /* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, UNITS, FSIZE, grid, box, initialize, adjacencies */
 /* exported init_system */
 
-function init_system(program_phys, program_calc, program_rk4o, program_draw, program_stat) {
-	var system = {};
-
+function init_system(system, program_phys, program_calc, program_rk4o, program_draw, program_stat) {
 	// Uniforms
 	program_phys.u_dt		= gl.getUniformLocation(program_phys, 'u_dt');
 	program_calc.u_dt		= gl.getUniformLocation(program_calc, 'u_dt');
@@ -48,37 +46,6 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	program_draw.a_reference = gl.getAttribLocation(program_draw, 'a_reference');
 	program_stat.a_position = gl.getAttribLocation(program_stat, 'a_position');
 	program_stat.a_vertcolor = gl.getAttribLocation(program_stat, 'a_vertcolor');
-
-	var grid_positions = grid();
-	system.grid_size = grid_positions.length / 6;
-	var sphere = sphere_primitive(system.grid_size + 42, -5.0, -5.0, 7.5);
-
-	// Static Stuff
-	var values = new Float32Array([
-		// Axes
-		0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-		2.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-		0.0, 2.0, 0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-		0.0, 0.0, 2.0, 0.0, 0.0, 1.0,
-	].concat(grid_positions).concat(box(5.0, 5.0, 7.5)).concat(sphere.vertices));
-
-	var indices = new Uint16Array(sphere.indices);
-	console.log(indices);
-	system.sphere_indices_length = sphere.indices.length;
-
-	system.buffer_static = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_static);
-	gl.bufferData(gl.ARRAY_BUFFER, values, gl.STATIC_DRAW);
-	gl.vertexAttribPointer(program_stat.a_position, 3, gl.FLOAT, false, 6 * FSIZE, 0 * FSIZE);
-	gl.vertexAttribPointer(program_stat.a_vertcolor, 3, gl.FLOAT, false, 6 * FSIZE, 3 * FSIZE);
-	gl.enableVertexAttribArray(program_stat.a_position);
-	gl.enableVertexAttribArray(program_stat.a_vertcolor);
-
-	system.buffer_static_index = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, system.buffer_static_index);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
 	var initial_state	= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
 	var adjacent		= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
@@ -224,6 +191,4 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	gl.enableVertexAttribArray(program_phys.a_rectangle);
 	gl.enableVertexAttribArray(program_calc.a_rectangle);
 	gl.enableVertexAttribArray(program_rk4o.a_rectangle);
-
-	return system;
 }

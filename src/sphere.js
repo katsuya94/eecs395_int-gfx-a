@@ -1,7 +1,8 @@
 /* jshint strict: false */
-/* exported sphere_primitive */
+/* exported sphere */
+
 // From JTPointPhongSphere_PerFragment.js
-function sphere_primitive(offset, x, y, z) {
+function sphere(offset, x, y, z) {
 	var SPHERE_DIV = 51;
 
 	var i, ai, si, ci;

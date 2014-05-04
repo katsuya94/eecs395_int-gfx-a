@@ -1,8 +1,6 @@
 /* jshint strict: false */
-/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat */
+/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat, init_static */
 /* exported main */
-
-var projection;
 
 function main() {
 
@@ -11,7 +9,7 @@ function main() {
 	gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
 	if (!gl.getExtension('OES_texture_float')) {
-		return;
+		throw 'Your browser does not support Floating-Point Textures.';
 	}
 
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -58,8 +56,13 @@ function main() {
 		document.getElementById('stat-vs').text,
 		document.getElementById('stat-fs').text);
 
+	var system = {};
+
 	// Set Up Render To Texture
-	var system = init_system(program_phys, program_calc, program_rk4o, program_draw, program_stat);
+	init_system(system, program_phys, program_calc, program_rk4o, program_draw, program_stat);
+
+	// Set Up Static Elements
+	init_static(system, program_stat);
 
 	// Set up Camera (TODO)
 	var camera = init_camera();
@@ -174,9 +177,9 @@ function main() {
 
 		gl.uniformMatrix4fv(program_stat.u_vp, false, camera.vp);
 
-		gl.drawArrays(gl.LINES, 0, 6 + system.grid_size);
-		gl.drawArrays(gl.TRIANGLES, 6 + system.grid_size, 36);
-		gl.drawElements(gl.TRIANGLES, system.sphere_indices_length, gl.UNSIGNED_SHORT, 0);
+		gl.drawArrays(gl.LINES, 0, system.axes_size + system.grid_size);
+		gl.drawArrays(gl.TRIANGLES, system.axes_size + system.grid_size, system.box_size);
+		gl.drawElements(gl.TRIANGLES, system.sphere_index_size, gl.UNSIGNED_SHORT, 0);
 
 		stats.end();
 		window.requestAnimationFrame(frame);

@@ -8246,10 +8246,10 @@ var PAUSED = true;;
 function grid() {
 	var array = [];
 	for(var i= -GRID_NUM; i <= GRID_NUM; i++) {
-		array = array.concat([GRID_INT * GRID_NUM, GRID_INT * i, 0.0, 0.5, 0.5, 0.5]);
-		array = array.concat([-GRID_INT * GRID_NUM, GRID_INT * i, 0.0, 0.5, 0.5, 0.5]);
-		array = array.concat([GRID_INT * i, GRID_INT * GRID_NUM, 0.0, 0.5, 0.5, 0.5]);
-		array = array.concat([GRID_INT * i, -GRID_INT * GRID_NUM, 0.0, 0.5, 0.5, 0.5]);
+		array = array.concat([GRID_INT * GRID_NUM, GRID_INT * i, 0.0, 0.5, 0.4, 0.5]);
+		array = array.concat([-GRID_INT * GRID_NUM, GRID_INT * i, 0.0, 0.5, 0.4, 0.5]);
+		array = array.concat([GRID_INT * i, GRID_INT * GRID_NUM, 0.0, 0.4, 0.5, 0.5]);
+		array = array.concat([GRID_INT * i, -GRID_INT * GRID_NUM, 0.0, 0.4, 0.5, 0.5]);
 	}
 	return array;
 };
@@ -8345,10 +8345,8 @@ function adjacencies(adj) {
 
 // FILE SEPARATOR
 
-/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat */
+/* global gl: true, canvas: true, createProgram, init_system, init_camera, Stats, mat4, vec3, FSIZE, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, MODE: true, PAUSED: true, resize, dat, init_static */
 /* exported main */
-
-var projection;
 
 function main() {
 
@@ -8357,7 +8355,7 @@ function main() {
 	gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
 	if (!gl.getExtension('OES_texture_float')) {
-		return;
+		throw 'Your browser does not support Floating-Point Textures.';
 	}
 
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -8404,8 +8402,13 @@ function main() {
 		document.getElementById('stat-vs').text,
 		document.getElementById('stat-fs').text);
 
+	var system = {};
+
 	// Set Up Render To Texture
-	var system = init_system(program_phys, program_calc, program_rk4o, program_draw, program_stat);
+	init_system(system, program_phys, program_calc, program_rk4o, program_draw, program_stat);
+
+	// Set Up Static Elements
+	init_static(system, program_stat);
 
 	// Set up Camera (TODO)
 	var camera = init_camera();
@@ -8520,24 +8523,25 @@ function main() {
 
 		gl.uniformMatrix4fv(program_stat.u_vp, false, camera.vp);
 
-		gl.drawArrays(gl.LINES, 0, 6 + system.grid_size);
-		gl.drawArrays(gl.TRIANGLES, 6 + system.grid_size, 36);
-		gl.drawElements(gl.TRIANGLES, system.sphere_indices_length, gl.UNSIGNED_SHORT, 0);
+		gl.drawArrays(gl.LINES, 0, system.axes_size + system.grid_size);
+		gl.drawArrays(gl.TRIANGLES, system.axes_size + system.grid_size, system.box_size);
+		gl.drawElements(gl.TRIANGLES, system.sphere_index_size, gl.UNSIGNED_SHORT, 0);
 
 		stats.end();
-		window.requestAnimationFrame(frame);
+		frame();
 	};
 
 	resize();
 
-	window.requestAnimationFrame(frame);
+	frame();
 };
 
 // FILE SEPARATOR
 
-/* exported sphere_primitive */
+/* exported sphere */
+
 // From JTPointPhongSphere_PerFragment.js
-function sphere_primitive(offset, x, y, z) {
+function sphere(offset, x, y, z) {
 	var SPHERE_DIV = 51;
 
 	var i, ai, si, ci;
@@ -8592,12 +8596,48 @@ function sphere_primitive(offset, x, y, z) {
 
 // FILE SEPARATOR
 
+/* exported: init_static */
+function init_static(system, program_stat) {
+	system.axes_size = 6;
+	system.box_size = 36;
+
+	var grid_vertices = grid();
+	system.grid_size = grid_vertices.length / 6;
+
+	var spherical_bound = sphere(system.grid_size + system.axes_size + system.box_size, -5.0, -5.0, 7.5);
+
+	var values = new Float32Array([
+		// Axes
+		0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+		2.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+		0.0, 2.0, 0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+		0.0, 0.0, 2.0, 0.0, 0.0, 1.0,
+	].concat(grid_vertices).concat(box(5.0, 5.0, 7.5)).concat(spherical_bound.vertices));
+
+	var indices = new Uint16Array(spherical_bound.indices);
+	system.sphere_index_size = spherical_bound.indices.length;
+
+	system.buffer_static = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_static);
+	gl.bufferData(gl.ARRAY_BUFFER, values, gl.STATIC_DRAW);
+	gl.vertexAttribPointer(program_stat.a_position, 3, gl.FLOAT, false, 6 * FSIZE, 0 * FSIZE);
+	gl.vertexAttribPointer(program_stat.a_vertcolor, 3, gl.FLOAT, false, 6 * FSIZE, 3 * FSIZE);
+	gl.enableVertexAttribArray(program_stat.a_position);
+	gl.enableVertexAttribArray(program_stat.a_vertcolor);
+
+	var buffer_static_elements = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer_static_elements);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+};
+
+// FILE SEPARATOR
+
 /* global gl: true, STATE_TEXTURE_WIDTH, STATE_TEXTURE_HEIGHT, NUM_PARTICLES, PARTICLES_PER_ROW, NUM_SLOTS, UNITS, FSIZE, grid, box, initialize, adjacencies */
 /* exported init_system */
 
-function init_system(program_phys, program_calc, program_rk4o, program_draw, program_stat) {
-	var system = {};
-
+function init_system(system, program_phys, program_calc, program_rk4o, program_draw, program_stat) {
 	// Uniforms
 	program_phys.u_dt		= gl.getUniformLocation(program_phys, 'u_dt');
 	program_calc.u_dt		= gl.getUniformLocation(program_calc, 'u_dt');
@@ -8641,37 +8681,6 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	program_draw.a_reference = gl.getAttribLocation(program_draw, 'a_reference');
 	program_stat.a_position = gl.getAttribLocation(program_stat, 'a_position');
 	program_stat.a_vertcolor = gl.getAttribLocation(program_stat, 'a_vertcolor');
-
-	var grid_positions = grid();
-	system.grid_size = grid_positions.length / 6;
-	var sphere = sphere_primitive(system.grid_size + 42, -5.0, -5.0, 7.5);
-
-	// Static Stuff
-	var values = new Float32Array([
-		// Axes
-		0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-		2.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-		0.0, 2.0, 0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-		0.0, 0.0, 2.0, 0.0, 0.0, 1.0,
-	].concat(grid_positions).concat(box(5.0, 5.0, 7.5)).concat(sphere.vertices));
-
-	var indices = new Uint16Array(sphere.indices);
-	console.log(indices);
-	system.sphere_indices_length = sphere.indices.length;
-
-	system.buffer_static = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, system.buffer_static);
-	gl.bufferData(gl.ARRAY_BUFFER, values, gl.STATIC_DRAW);
-	gl.vertexAttribPointer(program_stat.a_position, 3, gl.FLOAT, false, 6 * FSIZE, 0 * FSIZE);
-	gl.vertexAttribPointer(program_stat.a_vertcolor, 3, gl.FLOAT, false, 6 * FSIZE, 3 * FSIZE);
-	gl.enableVertexAttribArray(program_stat.a_position);
-	gl.enableVertexAttribArray(program_stat.a_vertcolor);
-
-	system.buffer_static_index = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, system.buffer_static_index);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
 	var initial_state	= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
 	var adjacent		= new Float32Array(4 * NUM_PARTICLES * NUM_SLOTS);
@@ -8817,8 +8826,6 @@ function init_system(program_phys, program_calc, program_rk4o, program_draw, pro
 	gl.enableVertexAttribArray(program_phys.a_rectangle);
 	gl.enableVertexAttribArray(program_calc.a_rectangle);
 	gl.enableVertexAttribArray(program_rk4o.a_rectangle);
-
-	return system;
 };
 
 // FILE SEPARATOR

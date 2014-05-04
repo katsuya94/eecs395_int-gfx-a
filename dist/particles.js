@@ -8720,9 +8720,9 @@ function sphere(offset, x, y, z) {
 			positions.push(2 * cj + y);
 			positions.push(2 * ci * sj + z);
 			// Colors
-			positions.push(si * sj * 0.5 + 0.5);
-			positions.push(si * sj * 0.5 + 0.5);
-			positions.push(si * sj * 0.5 + 0.5);
+			positions.push(ci * sj * 0.25 + 0.5);
+			positions.push(ci * sj * 0.25 + 0.5);
+			positions.push(ci * sj * 0.25 + 0.5);
 		}
 	}
 

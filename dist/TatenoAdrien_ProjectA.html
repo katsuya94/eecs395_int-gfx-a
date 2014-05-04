@@ -239,10 +239,9 @@ void main() {
 			frag.xyz = frag.xyz * multiplier;
 		}
 		vec3 radius = position - SPHERE;
-		float component = dot(radius, frag.xyz);
-		if (length(radius) < 2.0 && component < 0.0) {
+		if (length(radius) < 2.0 && dot(radius, frag.xyz) < 0.0) {
 			vec3 normal = normalize(radius);
-			frag.xyz -= normal * component * 2.0;
+			frag.xyz -= normal * dot(normal, frag.xyz) * 2.0;
 		}
 	}
 
